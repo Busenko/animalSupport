@@ -254,7 +254,7 @@ scrollContainer.addEventListener('mousemove', e => {
 });
 
 //лінії  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Конфігураційні змінні для стилів та анімації
+// Конфігураційні змінні
 const LINE_COLORS = ["#ead409", "#ff6f61", "#4caf50", "#2196f3"];
 const DOT_COLORS = ["#2196f3", "#2196f3", "#2196f3", "#2196f3"];
 const LINE_WIDTH = 3;
@@ -263,159 +263,222 @@ const CORNER_RADIUS = 30;
 const ANIMATION_EASING = "ease-in-out";
 const ANIMATION_DELAY = 0;
 const LINE_DIRECTION = "farthest";
-const MOBILE_BREAKPOINT = 440; // Новий параметр - межа для мобільних екранів
+const MOBILE_BREAKPOINT = 440;
+const RESIZE_THRESHOLD = 50; // Мінімальна зміна ширини для перемальовування
 
+// Глобальні змінні
+let lastWindowSize = {
+  width: window.innerWidth,
+  height: window.innerHeight
+};
+let animationFrameId = null;
+
+// Функція debounce
+function debounce(func, wait) {
+  let timeout;
+  return function() {
+    const context = this, args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(context, args);
+    }, wait);
+  };
+}
+
+// Анімація лінії
 function animateLine(path, duration = 800) {
-    const length = path.getTotalLength();
-    path.style.strokeDasharray = length;
-    path.style.strokeDashoffset = length;
-    path.getBoundingClientRect();
-    path.style.transition = `stroke-dashoffset ${duration}ms ${ANIMATION_EASING}`;
-    path.style.strokeDashoffset = "0";
+  const length = path.getTotalLength();
+  path.style.strokeDasharray = length;
+  path.style.strokeDashoffset = length;
+  path.getBoundingClientRect();
+  path.style.transition = `stroke-dashoffset ${duration}ms ${ANIMATION_EASING}`;
+  path.style.strokeDashoffset = "0";
 }
 
+// Анімація точки
 function animateDot(dot, duration = 300) {
-    dot.style.opacity = "1";
-    dot.style.transition = `opacity ${duration}ms ${ANIMATION_EASING}`;
+  dot.style.opacity = "1";
+  dot.style.transition = `opacity ${duration}ms ${ANIMATION_EASING}`;
 }
 
+// Малювання ліній між заголовками
 function drawLines() {
+  // Скасувати анімацію, якщо вона в процесі
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+
+  animationFrameId = requestAnimationFrame(() => {
     const headings = Array.from(document.querySelectorAll("h2"));
     const edgeOffset = 10;
     const textOffset = 12;
     const viewportWidth = document.documentElement.clientWidth;
     const isMobile = viewportWidth <= MOBILE_BREAKPOINT;
 
-    document.querySelectorAll('.connection-line-svg').forEach(svg => svg.remove());
+    // Видаляємо старі SVG
+    document.querySelectorAll('.connection-line-svg').forEach(svg => {
+      if (!svg.dataset.preserve) {
+        svg.remove();
+      }
+    });
 
     for (let i = 0; i < headings.length - 1; i++) {
-        const h1 = headings[i];
-        const h2 = headings[i + 1];
+      const h1 = headings[i];
+      const h2 = headings[i + 1];
 
-        const rect1 = h1.getBoundingClientRect();
-        const rect2 = h2.getBoundingClientRect();
+      const rect1 = h1.getBoundingClientRect();
+      const rect2 = h2.getBoundingClientRect();
 
-        // Нова логіка: для мобільних екранів чергуємо сторони
-        let h1Left;
-        if (isMobile) {
-            // Чергування: 0 - ліва, 1 - права, 2 - ліва, 3 - права...
-            h1Left = (i % 2 === 0);
-        } else {
-            // Стандартна логіка для більших екранів
-            if (LINE_DIRECTION === "closest") {
-                h1Left = rect1.left < viewportWidth / 2;
-            } else {
-                h1Left = rect1.left >= viewportWidth / 2;
-            }
-        }
+      // Визначаємо сторону для мобільних та десктопів
+      let h1Left;
+      if (isMobile) {
+        h1Left = (i % 2 === 0);
+      } else {
+        h1Left = LINE_DIRECTION === "closest" 
+          ? rect1.left < viewportWidth / 2 
+          : rect1.left >= viewportWidth / 2;
+      }
 
-        const startX = h1Left ? rect1.left - textOffset : rect1.right + textOffset;
-        const startY = rect1.top + rect1.height / 2 + window.scrollY;
-        const endX = h1Left ? rect2.left - textOffset : rect2.right + textOffset;
-        const endY = rect2.top + rect2.height / 2 + window.scrollY;
-        const edgeX = h1Left ? edgeOffset : viewportWidth - edgeOffset;
+      const startX = h1Left ? rect1.left - textOffset : rect1.right + textOffset;
+      const startY = rect1.top + rect1.height / 2 + window.scrollY;
+      const endX = h1Left ? rect2.left - textOffset : rect2.right + textOffset;
+      const endY = rect2.top + rect2.height / 2 + window.scrollY;
+      const edgeX = h1Left ? edgeOffset : viewportWidth - edgeOffset;
+      const verticalDir = endY > startY ? 1 : -1;
 
-        const verticalDir = endY > startY ? 1 : -1;
+      // Створення SVG елемента
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add('connection-line-svg');
+      svg.style.position = "absolute";
+      svg.style.left = "0";
+      svg.style.top = "0";
+      svg.style.width = "100vw";
+      svg.style.height = document.documentElement.scrollHeight + "px";
+      svg.style.pointerEvents = "none";
+      svg.style.zIndex = "0";
 
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.classList.add('connection-line-svg');
-        svg.style.position = "absolute";
-        svg.style.left = "0";
-        svg.style.top = "0";
-        svg.style.width = "100vw";
-        svg.style.height = document.documentElement.scrollHeight + "px";
-        svg.style.pointerEvents = "none";
-        svg.style.zIndex = "0";
+      // Створення шляху лінії
+      const pathData = `
+        M ${startX} ${startY}
+        L ${edgeX - CORNER_RADIUS * (h1Left ? -1 : 1)} ${startY}
+        Q ${edgeX} ${startY} ${edgeX} ${startY + CORNER_RADIUS * verticalDir}
+        L ${edgeX} ${endY - CORNER_RADIUS * verticalDir}
+        Q ${edgeX} ${endY} ${edgeX - CORNER_RADIUS * (h1Left ? -1 : 1)} ${endY}
+        L ${endX} ${endY}
+      `;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathData);
+      path.setAttribute("stroke", LINE_COLORS[i % LINE_COLORS.length]);
+      path.setAttribute("stroke-width", LINE_WIDTH);
+      path.setAttribute("fill", "none");
+      path.setAttribute("data-index", i);
+      svg.appendChild(path);
 
-        const pathData = `
-            M ${startX} ${startY}
-            L ${edgeX - CORNER_RADIUS * (h1Left ? -1 : 1)} ${startY}
-            Q ${edgeX} ${startY} ${edgeX} ${startY + CORNER_RADIUS * verticalDir}
-            L ${edgeX} ${endY - CORNER_RADIUS * verticalDir}
-            Q ${edgeX} ${endY} ${edgeX - CORNER_RADIUS * (h1Left ? -1 : 1)} ${endY}
-            L ${endX} ${endY}
-        `;
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", pathData);
-        path.setAttribute("stroke", LINE_COLORS[i % LINE_COLORS.length]);
-        path.setAttribute("stroke-width", LINE_WIDTH);
-        path.setAttribute("fill", "none");
-        path.setAttribute("data-index", i);
-        svg.appendChild(path);
+      // Створення точок
+      const startDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      startDot.setAttribute("cx", startX);
+      startDot.setAttribute("cy", startY);
+      startDot.setAttribute("r", DOT_RADIUS);
+      startDot.setAttribute("fill", DOT_COLORS[i % DOT_COLORS.length]);
+      startDot.style.opacity = "0";
+      startDot.setAttribute("data-dot", "start");
+      svg.appendChild(startDot);
 
-        const startDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        startDot.setAttribute("cx", startX);
-        startDot.setAttribute("cy", startY);
-        startDot.setAttribute("r", DOT_RADIUS);
-        startDot.setAttribute("fill", DOT_COLORS[i % DOT_COLORS.length]);
-        startDot.style.opacity = "0";
-        startDot.setAttribute("data-dot", "start");
-        svg.appendChild(startDot);
+      const endDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      endDot.setAttribute("cx", endX);
+      endDot.setAttribute("cy", endY);
+      endDot.setAttribute("r", DOT_RADIUS);
+      endDot.setAttribute("fill", DOT_COLORS[(i + 1) % DOT_COLORS.length]);
+      endDot.style.opacity = "0";
+      endDot.setAttribute("data-dot", "end");
+      svg.appendChild(endDot);
 
-        const endDot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        endDot.setAttribute("cx", endX);
-        endDot.setAttribute("cy", endY);
-        endDot.setAttribute("r", DOT_RADIUS);
-        endDot.setAttribute("fill", DOT_COLORS[(i + 1) % DOT_COLORS.length]);
-        endDot.style.opacity = "0";
-        endDot.setAttribute("data-dot", "end");
-        svg.appendChild(endDot);
+      document.body.appendChild(svg);
 
-        document.body.appendChild(svg);
-
-        setTimeout(() => {
-            path.style.strokeDasharray = path.getTotalLength();
-            path.style.strokeDashoffset = path.getTotalLength();
-        }, 10);
+      // Ініціалізація анімації
+      setTimeout(() => {
+        path.style.strokeDasharray = path.getTotalLength();
+        path.style.strokeDashoffset = path.getTotalLength();
+      }, 10);
     }
+  });
 }
 
-// Решта коду залишається без змін
+// Перевірка чи заголовок в центрі екрана
 function isHeadingCenteredOrAbove(heading) {
-    const rect = heading.getBoundingClientRect();
-    const centerY = window.innerHeight / 2;
-    return rect.top < centerY;
+  const rect = heading.getBoundingClientRect();
+  const centerY = window.innerHeight / 2;
+  return rect.top < centerY;
 }
 
+// Перевірка та анімація ліній
 function checkAndAnimateLines() {
-    const headings = Array.from(document.querySelectorAll("h2"));
-    const svgs = Array.from(document.querySelectorAll('.connection-line-svg'));
-    headings.forEach((heading, i) => {
-        if (i < svgs.length) {
-            const svg = svgs[i];
-            const path = svg.querySelector('path');
-            const startDot = svg.querySelector('circle[data-dot="start"]');
-            const endDot = svg.querySelector('circle[data-dot="end"]');
-            if (isHeadingCenteredOrAbove(heading)) {
-                if (!path.classList.contains('animated')) {
-                    setTimeout(() => {
-                        animateDot(startDot);
-                        setTimeout(() => {
-                            path.classList.add('animated');
-                            animateLine(path);
-                            setTimeout(() => {
-                                animateDot(endDot);
-                            }, 800);
-                        }, 300);
-                    }, ANIMATION_DELAY);
-                }
-            } else {
-                if (!path.classList.contains('animated')) {
-                    path.style.strokeDashoffset = path.getTotalLength();
-                    startDot.style.opacity = "0";
-                    endDot.style.opacity = "0";
-                }
-            }
+  const headings = Array.from(document.querySelectorAll("h2"));
+  const svgs = Array.from(document.querySelectorAll('.connection-line-svg'));
+  
+  headings.forEach((heading, i) => {
+    if (i < svgs.length) {
+      const svg = svgs[i];
+      const path = svg.querySelector('path');
+      const startDot = svg.querySelector('circle[data-dot="start"]');
+      const endDot = svg.querySelector('circle[data-dot="end"]');
+      
+      if (isHeadingCenteredOrAbove(heading)) {
+        if (!path.classList.contains('animated')) {
+          setTimeout(() => {
+            animateDot(startDot);
+            setTimeout(() => {
+              path.classList.add('animated');
+              animateLine(path);
+              setTimeout(() => {
+                animateDot(endDot);
+              }, 800);
+            }, 300);
+          }, ANIMATION_DELAY);
         }
-    });
+      } else {
+        if (!path.classList.contains('animated')) {
+          path.style.strokeDashoffset = path.getTotalLength();
+          startDot.style.opacity = "0";
+          endDot.style.opacity = "0";
+        }
+      }
+    }
+  });
 }
 
-window.addEventListener("resize", () => {
+// Обробник зміни розміру вікна
+function handleResize() {
+  const currentWidth = window.innerWidth;
+  const currentHeight = window.innerHeight;
+  
+  // Перемальовуємо тільки при значній зміні розмірів
+  if (Math.abs(currentWidth - lastWindowSize.width) > RESIZE_THRESHOLD || 
+      Math.abs(currentHeight - lastWindowSize.height) > RESIZE_THRESHOLD) {
     drawLines();
     setTimeout(checkAndAnimateLines, 100);
-});
-window.addEventListener("load", () => {
-    drawLines();
-    setTimeout(checkAndAnimateLines, 100);
-});
-window.addEventListener("scroll", checkAndAnimateLines);
+    lastWindowSize = { width: currentWidth, height: currentHeight };
+  }
+}
+
+// Ініціалізація
+function init() {
+  drawLines();
+  setTimeout(checkAndAnimateLines, 100);
+  lastWindowSize = {
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+  
+  // Додаємо обробники подій
+  window.addEventListener("resize", debounce(handleResize, 100));
+  window.addEventListener("scroll", debounce(checkAndAnimateLines, 50));
+  window.addEventListener("load", init);
+}
+
+// Запуск
+if (document.readyState === "complete") {
+  init();
+} else {
+  window.addEventListener("load", init);
+}
