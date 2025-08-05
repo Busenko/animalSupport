@@ -240,7 +240,7 @@ body.lock {
 
     .openPopup.info-btn {
    position: absolute;
-        
+        z-index: 10;
         bottom: 10px;
         right: 10px;
         width: 30px; 
@@ -356,6 +356,8 @@ main {
  display: flex;
  justify-content: center;
  flex-wrap: wrap;
+
+ overflow: hidden;
 
 }
 
@@ -858,7 +860,7 @@ justify-content: flex-end;
     width: 100%;
    
     z-index: 20;
-   border: solid 4px #ccc;
+   border: solid 4px #c82ad3;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   padding: 20px;
@@ -985,6 +987,7 @@ label {
   transition: 0.2s ease all;
   pointer-events: none;
   font-size: 18px;
+  
 }
 
 input:focus + label,
@@ -1044,4 +1047,28 @@ button:hover {
     padding: 6px 12px;
   }
 
+}
+
+
+/*  */
+/* Анімація тільки для всього, крім h2 */
+/* Початковий стан */
+.open-left *:not(h2),
+.open-center *:not(h2),
+.open-right *:not(h2,label) {
+  opacity: 0;
+  transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+}
+
+/* Зсуви */
+.open-left *:not(h2) { transform: translateX(-100px); }
+.open-right *:not(h2,label) { transform: translateX(100px); }
+.open-center *:not(h2) { transform: translateY(50px); }
+
+/* Показ при скролі */
+.open-left.show *:not(h2),
+.open-right.show *:not(h2,label),
+.open-center.show *:not(h2) {
+  opacity: 1;
+  transform: translate(0, 0);
 }
