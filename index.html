@@ -286,30 +286,30 @@
 <!--  -->
 <section  class="contact-form open-right">
  <h2 id="section4">Залишайся на зв'язку</h2>
-  <form action="">
-     
-    <div class="form-group">
-      <input type="text" id="name" name="name" required placeholder=" ">
-      <label for="name">Ім'я</label>
-    </div>
+<form name="submit-to-google-sheet" action="#" method="POST">
+  <input type="hidden" name="timestamp" id="timestamp" value="">
 
-    <div class="form-group">
-      <input type="email" id="email" name="email" required placeholder=" ">
-      <label for="email">Email</label>
-    </div>
+  <div class="form-group">
+    <input type="text" id="name" name="name" required placeholder=" ">
+    <label for="name">Ім'я</label>
+  </div>
 
-    <div class="form-group">
-      <input type="url" id="social" name="social" placeholder=" " />
-      <label for="social">Посилання на соцмережу</label>
-    </div>
+  <div class="form-group">
+    <input type="email" id="email" name="email" required placeholder=" ">
+    <label for="email">Email</label>
+  </div>
 
-    <div class="form-group">
-      <textarea id="message" name="message" rows="4" required placeholder=" "></textarea>
-      <label for="message">Повідомлення</label>
-    </div>
+  <div class="form-group">
+    <textarea id="message" name="message" rows="4" required placeholder=" "></textarea>
+    <label for="message">Повідомлення</label>
+  </div>
 
-    <button type="submit">Надіслати</button>
-  </form>
+  <div id="submit-wrapper">
+    <button type="submit" id="submit-button">Надіслати</button>
+    <p id="form-status"></p>
+  </div>
+</form>
+
 </section>
 
  
