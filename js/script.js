@@ -438,3 +438,69 @@ function handleScrollOnce() {
 
 window.addEventListener('scroll', handleScrollOnce);
 window.addEventListener('load', handleScrollOnce);
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbzIMUP7RrnsIR_050-PPWX4P2YBSx6tW_W3J2iDsEE6l-32oQBZE-2uVCvqWG0tcvQGwA/exec';
+  const form = document.forms['submit-to-google-sheet'];
+  const submitButton = document.getElementById('submit-button');
+  const statusText = document.getElementById('form-status');
+
+
+  function containsThreats(input) {
+    const lower = input.toLowerCase();
+    return /<|>|script|javascript:/.test(lower);
+  }
+
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const name = form.name.value.trim();
+    const email = form.email.value.trim();
+    const message = form.message.value.trim();
+
+    // Валідація полів
+    const nameRegex = /^[a-zA-Zа-яА-ЯіїєІЇЄ'’\s-]{2,}$/u;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!nameRegex.test(name)) {
+      statusText.textContent = 'Введіть коректне імʼя.';
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      statusText.textContent = 'Введіть коректний email.';
+      return;
+    }
+
+    if (message.length < 3 || containsThreats(message)) {
+      statusText.textContent = 'Повідомлення містить заборонені символи або є надто коротким.';
+      return;
+    }
+
+    // Встановити поточний час
+    document.getElementById('timestamp').value = new Date().toLocaleString('uk-UA');
+
+    // Приховати кнопку, показати статус
+    submitButton.style.display = 'none';
+    statusText.textContent = 'Надсилання...';
+
+    fetch(scriptURL, {
+      method: 'POST',
+      body: new FormData(form)
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    })
+    .then(data => {
+      statusText.textContent = 'Успішно надіслано!';
+      form.reset();
+    })
+    .catch(error => {
+      statusText.textContent = 'Помилка надсилання. Спробуйте ще раз.';
+      console.error('Помилка надсилання:', error.message);
+      submitButton.style.display = 'inline-block';
+    })
+  });
