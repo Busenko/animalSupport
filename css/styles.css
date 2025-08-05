@@ -1023,7 +1023,7 @@ button:hover {
     max-width: 100%;
     text-align: center;
 
-     border-left:solid 4px #8400C9;
+     border: none;
   }
   
   input,
