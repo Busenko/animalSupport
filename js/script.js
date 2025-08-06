@@ -1,7 +1,4 @@
-
-
- 
- // слайдер...................................................................................................................
+// слайдер...................................................................................................................
 const VISIBLE_SLIDES = 7;
 const CENTER_INDEX = Math.floor(VISIBLE_SLIDES / 2);
 
@@ -145,73 +142,176 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') prevSlide();
 });
 //ПОПАП .........................................................................................................................................
-const openPopupBtns = document.querySelectorAll(".openPopup");
-const popupOverlay = document.getElementById("popupOverlay");
-const closePopupBtn = document.querySelector(".closePopup");
-let lastClickedButton = null;
+// const openPopupBtns = document.querySelectorAll(".openPopup");
+// const popupOverlay = document.getElementById("popupOverlay");
+// const closePopupBtn = document.querySelector(".closePopup");
+// let lastClickedButton = null;
 
-openPopupBtns.forEach(button => {
-    button.addEventListener("click", function () {
-        lastClickedButton = button;
-        const buttonRect = button.getBoundingClientRect();
-        const popupWidth = popupOverlay.offsetWidth;
-        const popupHeight = popupOverlay.offsetHeight;
+// openPopupBtns.forEach(button => {
+//     button.addEventListener("click", function () {
+//         lastClickedButton = button;
+//         const buttonRect = button.getBoundingClientRect();
+//         const popupWidth = popupOverlay.offsetWidth;
+//         const popupHeight = popupOverlay.offsetHeight;
 
-        popupOverlay.style.transition = "none";
-        popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupHeight / 2}px) scale(0)`;
+//         popupOverlay.style.transition = "none";
+//         popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupHeight / 2}px) scale(0)`;
         
-        popupOverlay.classList.add("show");
+//         popupOverlay.classList.add("show");
         
-        setTimeout(() => {
-            popupOverlay.style.transition = "transform 0.3s ease-out";
-            popupOverlay.style.transform = `translate(${window.innerWidth / 2 - popupWidth / 2}px, ${window.innerHeight / 2 - popupHeight / 2}px) scale(1)`;
-        }, 10);
+//         setTimeout(() => {
+//             popupOverlay.style.transition = "transform 0.3s ease-out";
+//             popupOverlay.style.transform = `translate(${window.innerWidth / 2 - popupWidth / 2}px, ${window.innerHeight / 2 - popupHeight / 2}px) scale(1)`;
+//         }, 10);
 
-        document.body.classList.add('lock');
+//         document.body.classList.add('lock');
         
-        // Зміна тут: шукаємо img в батьківському .pet-carousel__card
-        const popupImgContainer = document.querySelector(".popup__img");
-        const originalImg = button.closest('.pet-carousel__card').querySelector("img");
-        if (originalImg && popupImgContainer) {
-            const imgClone = originalImg.cloneNode(true);
-            imgClone.classList.add("popup-clone-img");
-            popupImgContainer.innerHTML = ""; // Очистити попередній вміст
-            popupImgContainer.appendChild(imgClone);
-        }
-    });
-});
+//         // Зміна тут: шукаємо img в батьківському .pet-carousel__card
+//         const popupImgContainer = document.querySelector(".popup__img");
+//         const originalImg = button.closest('.pet-carousel__card').querySelector("img");
+//         if (originalImg && popupImgContainer) {
+//             const imgClone = originalImg.cloneNode(true);
+//             imgClone.classList.add("popup-clone-img");
+//             popupImgContainer.innerHTML = ""; // Очистити попередній вміст
+//             popupImgContainer.appendChild(imgClone);
+//         }
+//     });
+// });
 
 
-popupOverlay.addEventListener("click", function (event) {
-    if (event.target === popupOverlay) {
-        closePopup();
-    }
-});
+// popupOverlay.addEventListener("click", function (event) {
+//     if (event.target === popupOverlay) {
+//         closePopup();
+//     }
+// });
 
-closePopupBtn.addEventListener("click", closePopup);
+// closePopupBtn.addEventListener("click", closePopup);
 
-function closePopup() {
-    if (!lastClickedButton) return;
+// function closePopup() {
+//     if (!lastClickedButton) return;
 
-    const buttonRect = lastClickedButton.getBoundingClientRect();
+//     const buttonRect = lastClickedButton.getBoundingClientRect();
 
-    popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
+//     popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
 
-    setTimeout(() => {
-        popupOverlay.classList.remove("show");
-        document.body.classList.remove('lock');
-        lastClickedButton = null;
+//     setTimeout(() => {
+//         popupOverlay.classList.remove("show");
+//         document.body.classList.remove('lock');
+//         lastClickedButton = null;
 
-// Видалення клону зображення
+// // Видалення клону зображення
+// const popupImgContainer = document.querySelector(".popup__img");
+// if (popupImgContainer) {
+//     popupImgContainer.innerHTML = "";
+// }
+
+
+//     }, 300);
+// }
+ fetch('https://script.google.com/macros/s/AKfycbwNZo_RKGbc75oTsw4agUyORRikPtxOuMuyVmgrIT6jn6fdtN4Qnr61Ok5_Atpafm5tdg/exec')
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById('carousel');
+
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.classList.add('pet-carousel__card');
+
+        // запис у data-атрибути
+        card.dataset.name = item["Ім'я"];
+        card.dataset.breed = item["Порода"];
+        card.dataset.age = item["Вік"];
+        card.dataset.size = item["Розмір"];
+        card.dataset.city = item["Місто"];
+        card.dataset.waits = item["Чекає господаря"];
+        card.dataset.photo = item["Фото"];
+
+        card.innerHTML = `
+          <button class="openPopup info-btn" aria-label="Інформація">+</button>
+          <img src="${item["Фото"]}" alt="${item["Ім'я"]}">
+        `;
+
+        container.appendChild(card);
+      });
+
+      //
+      const openPopupBtns = document.querySelectorAll(".openPopup");
+      const popupOverlay = document.getElementById("popupOverlay");
+      const closePopupBtn = document.querySelector(".closePopup");
+      let lastClickedButton = null;
+
+      openPopupBtns.forEach(button => {
+      button.addEventListener("click", function () {
+  lastClickedButton = button;
+  const buttonRect = button.getBoundingClientRect();
+  const popupWidth = popupOverlay.offsetWidth;
+  const popupHeight = popupOverlay.offsetHeight;
+
+  popupOverlay.style.transition = "none";
+  popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupHeight / 2}px) scale(0)`;
+
+  popupOverlay.classList.add("show");
+
+  setTimeout(() => {
+    popupOverlay.style.transition = "transform 0.3s ease-out";
+    popupOverlay.style.transform = `translate(${window.innerWidth / 2 - popupWidth / 2}px, ${window.innerHeight / 2 - popupHeight / 2}px) scale(1)`;
+  }, 10);
+
+  document.body.classList.add('lock');
+
+// Клонування зображення
 const popupImgContainer = document.querySelector(".popup__img");
-if (popupImgContainer) {
-    popupImgContainer.innerHTML = "";
+const originalImg = button.closest('.pet-carousel__card').querySelector("img");
+if (originalImg && popupImgContainer) {
+  const imgClone = originalImg.cloneNode(true);
+  imgClone.classList.add("popup-clone-img");
+  popupImgContainer.innerHTML = "";
+  popupImgContainer.appendChild(imgClone);
 }
 
 
-    }, 300);
-}
+  // Вставлення даних
+  const card = button.closest('.pet-carousel__card');
+  const dataset = card.dataset;
 
+  document.getElementById("popupName").textContent = dataset.name || "";
+  document.getElementById("popupBreed").textContent = dataset.breed || "";
+  document.getElementById("popupAge").textContent = dataset.age || "";
+  document.getElementById("popupSize").textContent = dataset.size || "";
+  document.getElementById("popupCity").textContent = dataset.city || "";
+  document.getElementById("popupWaits").textContent = dataset.waits || "";
+});
+
+      });
+
+      popupOverlay.addEventListener("click", function (event) {
+        if (event.target === popupOverlay) {
+          closePopup();
+        }
+      });
+
+      closePopupBtn.addEventListener("click", closePopup);
+
+      function closePopup() {
+        if (!lastClickedButton) return;
+
+        const buttonRect = lastClickedButton.getBoundingClientRect();
+
+        popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
+
+        setTimeout(() => {
+          popupOverlay.classList.remove("show");
+          document.body.classList.remove('lock');
+          lastClickedButton = null;
+
+          const popupImgContainer = document.querySelector(".popup__img");
+          if (popupImgContainer) {
+            popupImgContainer.innerHTML = "";
+          }
+        }, 300);
+      }
+    })
+    .catch(err => console.error('Помилка завантаження карток:', err));
 
 
 
@@ -441,7 +541,7 @@ window.addEventListener('load', handleScrollOnce);
 
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbzIMUP7RrnsIR_050-PPWX4P2YBSx6tW_W3J2iDsEE6l-32oQBZE-2uVCvqWG0tcvQGwA/exec';
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbwNZo_RKGbc75oTsw4agUyORRikPtxOuMuyVmgrIT6jn6fdtN4Qnr61Ok5_Atpafm5tdg/exec';
   const form = document.forms['submit-to-google-sheet'];
   const submitButton = document.getElementById('submit-button');
   const statusText = document.getElementById('form-status');
