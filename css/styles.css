@@ -176,7 +176,10 @@ body.lock {
         /* top: -10px;
         left: -10px; */
         max-width: 300px;
+        min-width: 300px;
+
         max-height: 200px;
+        min-height: 200px;
           border: 4px solid #fff;
           box-shadow: inset 3px 0 5px rgba(0, 0, 0, 0.1);
     }
@@ -551,6 +554,7 @@ padding: 10px;
 background-color: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
  border-radius: 10px;
+ min-height: 220px;
 }
 
 .pet-carousel__scroll::-webkit-scrollbar {
@@ -662,7 +666,8 @@ border-bottom-left-radius: 10px;
     min-width: 50%;
     max-width: 50%;
     min-height: 300px;
-    height: auto;
+    max-height: 300px;
+  
     
    
 position: relative;
@@ -672,7 +677,7 @@ position: relative;
 }
 
 .accordion__content-wrapper p {
-    margin: 0px;
+    margin: 5px;
    
 }
 
@@ -693,16 +698,16 @@ position: relative;
   
 }
 .map-container {
-  margin: 10px 0px;
+
   width: 100%;
-  height: 85%; 
+  height: 100%; 
 }
 
 .map-container iframe {
   width: 100%;
   height: 100%;
   border: none;
-  border-radius: 10px;
+  border-radius: 9px;
 }
 
 .h__pink.active {
@@ -723,7 +728,7 @@ position: relative;
  background-color: #fff;
 }
 .c__green.active {
- 
+ padding: 0px;
   border-radius: 10px;
    color: #32CD32;
  border: solid 4px #32CD32;
@@ -958,9 +963,45 @@ textarea {
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
  
- background: white;
+ background-color: #fff;
   outline: none;
 }
+
+/* Запобігти зміні кольору при фокусі */
+input:focus,
+textarea:focus {
+  outline: none;
+  background-color: #fff;
+  
+}
+
+/* Запобігти зміні кольору при наведенні */
+input:hover,
+textarea:hover {
+  background-color: #fff;
+  
+}
+
+/* Для браузерного автозаповнення (особливо Chrome) */
+input:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+background-color: #fff;
+}
+
+/* Firefox autofill */
+input:autofill, 
+textarea:autofill {
+  background-color: #fff;
+
+}
+
+
+
+
+
+
+
 textarea {
   min-height: 50px;
   max-height: 200px;
