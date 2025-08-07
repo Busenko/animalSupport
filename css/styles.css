@@ -1050,7 +1050,7 @@ textarea:not(:placeholder-shown) + label {
 button {
   background-color: #8400C9;
   color: #fff;
-  min-width: 200px;
+  
   padding: 10px 20px;
   border: none;
   font-size: 24px;
@@ -1143,3 +1143,4 @@ button.waiting:hover {
   opacity: 1;
   transform: translate(0, 0);
 }
+
