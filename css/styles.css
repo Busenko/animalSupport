@@ -81,10 +81,10 @@ body::-webkit-scrollbar-thumb {
     background-color: transparent;
     /* Колір смуги прокрутки */
 }
-body.lock {
+/* body.lock {
   overflow: hidden;
   height: 100vh; /* запобігає прокрутці на мобільних */
-}
+} */
 /*  */
  
 
@@ -1114,3 +1114,4 @@ button:hover {
   opacity: 1;
   transform: translate(0, 0);
 }
+
