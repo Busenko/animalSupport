@@ -102,9 +102,9 @@
       <div class="popup-overlay" id="popupOverlay">
         <div class="popup">
           <button class="closePopup">&times;</button>
-          <a class="popup__contact" href="tel:+380503071855">+38 050 307 18 55</a>
+          <a class="popup__contact" href="" id="popupPhone"></a>
           <div class="popup__wraper">
-            <div class="popup__img"></div>
+            <div class="popup__img"><img src="" alt=""></div>
             <div class="popup__info">
               <ul>
                 <li>Ім'я: <span id="popupName"></span></li>
@@ -124,12 +124,15 @@
 <section class="pet-cards open-left">
   <h2 id="section1" class="pet-cards__title" >Знайди друга</h2>
   <div class="pet-cards__info">
-    <p>Когось примітив - дзвони нам - <a href="tel:+380503071855">+38 050 307 18 55</a></p>
+    <p>Когось примітив - дзвони нам: <a href="tel:+380503071855">+38 050 307 18 55</a></p>
     <p>Або заповни форму - а ми зв'яжемось з тобою</p>
     
   </div>
       <div class="pet-carousel">
-     <div class="pet-carousel__scroll" id="carousel"></div>
+     <div class="pet-carousel__scroll" id="carousel">
+
+      
+     </div>
  </div>
 
 
@@ -154,6 +157,9 @@
 <!--  -->
 <section class="pet-walk open-right">
   <h2 id="section2">Погуляй з ним</h2>
+  <p>Вигул кожної середи та суботи з 10.00 по 13.00</p>
+  <p>Телефонуй: <a href="tel:+380664900997">+38 066 490 09 97</a></p>
+  
   <div class="accordion">
  
     <div class="accordion__tabs">
@@ -196,7 +202,7 @@
 
    
   </div>
-  
+ 
 </section>
 <script>
   const headers = document.querySelectorAll('.accordion__header');
@@ -241,13 +247,41 @@
 <section  class="contact-form open-right">
  <h2 id="section4">Залишайся на зв'язку</h2>
 <form name="submit-to-google-sheet" action="#" method="POST">
+
+
+<div class="custom-select-container">
+  <div class="custom-option selected" data-value="Повідомлення">Повідомлення</div>
+  <div class="custom-option" data-value="Вигул">Запис на вигул</div>
+</div>
+
+
+<input type="hidden" id="requestType" name="requestType" value="Повідомлення">
+
+<script>
+  const options = document.querySelectorAll('.custom-option');
+  const input = document.getElementById('requestType');
+
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      options.forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      input.value = option.dataset.value;
+    });
+  });
+</script>
+
+  
+
   <input type="hidden" name="timestamp" id="timestamp" value="">
 
   <div class="form-group">
     <input type="text" id="name" name="name" required placeholder=" ">
     <label for="name">Ім'я</label>
   </div>
-
+  <div class="form-group">
+    <input type="phone" id="phone" name="phone" placeholder=" ">
+    <label for="phone">Phone</label>
+  </div>
   <div class="form-group">
     <input type="email" id="email" name="email" required placeholder=" ">
     <label for="email">Email</label>
@@ -259,8 +293,8 @@
   </div>
 
   <div id="submit-wrapper">
-    <button type="submit" id="submit-button">Надіслати</button>
-    <p id="form-status"></p>
+     <p id="form-status"></p><button type="submit" id="submit-button">Надіслати</button>
+   
   </div>
 </form>
 
