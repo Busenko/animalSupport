@@ -463,7 +463,32 @@ li {
 }
 
 /*  */
+#carousel.loading {
+  position: relative;
+  overflow: hidden;
+}
 
+#carousel.loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #fffbc6 25%, #fff384 50%, #fffbc6 75%);
+  background-size: 200% 100%;
+  animation: loadingBar 1.2s linear infinite;
+  z-index: 10;
+}
+
+@keyframes loadingBar {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
 .pet-cards {
    width: 90%;
  
@@ -503,20 +528,33 @@ background-color: #fff;
     /* Колір смуги прокрутки */
 }
 
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .pet-carousel__card {
- position: relative;
+  position: relative;
   flex: 0 0 auto;
   width: 300px;
   height: 200px;
   margin-right: 10px;
   overflow: hidden;
- border: solid 4px #E2CC00;
+  border: solid 4px #E2CC00;
   border-radius: 10px;
- box-shadow: inset 3px 0 5px rgba(0, 0, 0, 0.1);
-  
+  box-shadow: inset 3px 0 5px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
 
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
 }
+
 .pet-carousel__card img {
   width: 100%;
   height: 100%;
@@ -840,6 +878,8 @@ justify-content: flex-end;
 
 
 /*  */
+
+
 .contact-form{
  width: 90%;
  display: flex;
@@ -869,6 +909,38 @@ form {
   position: relative;
   margin-bottom: 2rem;
 }
+
+
+    .custom-select-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  
+}
+
+.custom-select-container .custom-option {
+
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  border: 4px dashed transparent;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+}
+
+/* Активні стилі */
+.custom-select-container .custom-option.selected {
+  border-color: #8400C9;
+  background-color: #fff;
+  color: #8400C9;
+}
+
+
+
 
 input,
 textarea {
@@ -913,9 +985,26 @@ textarea:autofill {
 
 }
 
+#submit-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+#form-status {
+  color: #8400C9;
+  font-size: 24px;
+  font-weight: 700;
+
+   opacity: 0;
+  transition: opacity 0.5s ease;
+}
 
 
-
+#form-status.visible {
+  opacity: 1;
+}
 
 
 
@@ -961,6 +1050,7 @@ textarea:not(:placeholder-shown) + label {
 button {
   background-color: #8400C9;
   color: #fff;
+  min-width: 200px;
   padding: 10px 20px;
   border: none;
   font-size: 24px;
@@ -969,10 +1059,19 @@ button {
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-
 button:hover {
   background-color: #a600ff;
 }
+button.waiting {
+  background-color: #bababa;
+  color: #646464;
+ 
+  cursor: not-allowed;
+}
+button.waiting:hover {
+   background-color: #bababa;
+}
+
 
 @media (max-width: 1100px) { 
 
@@ -988,6 +1087,20 @@ button:hover {
   textarea {
     font-size: 18px;
   }
+  #submit-wrapper {
+  
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#form-status {
+  color: #8400C9;
+  font-size: 12px;
+
+}
+
   button {
     font-size: 20px;
     padding: 8px 16px;
