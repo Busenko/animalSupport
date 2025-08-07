@@ -144,11 +144,15 @@ document.addEventListener('keydown', (e) => {
 // Отримуємо дані з таблиці...................................................................................................................................
 document.addEventListener("DOMContentLoaded", async () => {
   const carousel = document.getElementById("carousel");
-  const endpoint = "https://script.google.com/macros/s/AKfycbwNZo_RKGbc75oTsw4agUyORRikPtxOuMuyVmgrIT6jn6fdtN4Qnr61Ok5_Atpafm5tdg/exec";
+  const endpoint = "https://script.google.com/macros/s/AKfycbzrndlcrTs4V4u5E3-0UZp9_DMbWT4-Jai6qk0IVk1JdBKPQwpRjNOzUKjimBegGB7rKw/exec";
+
+  carousel.classList.add("loading"); // показати смугу
 
   try {
     const response = await fetch(endpoint);
     const data = await response.json();
+
+    data.reverse();
 
     data.forEach(card => {
       const cardEl = document.createElement("div");
@@ -159,7 +163,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.setAttribute("aria-label", "Інформація");
       button.textContent = "+";
 
-      // Додаємо потрібні атрибути
       const fields = [
         "Ім'я",
         "Фото",
@@ -167,7 +170,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         "Вік",
         "Розмір",
         "Місто",
-        "Чекає господаря"
+        "Чекає господаря",
+        "Телефон"
       ];
 
       fields.forEach(field => {
@@ -185,6 +189,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (error) {
     console.error("Помилка при завантаженні карток:", error);
+  } finally {
+    carousel.classList.remove("loading"); // приховати смугу
   }
 });
 //ПОПАП .........................................................................................................................................
@@ -192,59 +198,118 @@ const popupOverlay = document.getElementById("popupOverlay");
 const closePopupBtn = document.querySelector(".closePopup");
 let lastClickedButton = null;
 
-//Функція для очікування появи кнопок
 function initPopupButtons() {
   const openPopupBtns = document.querySelectorAll(".openPopup");
 
   if (openPopupBtns.length === 0) {
-    // Якщо кнопок ще нема — чекаємо і пробуємо знову
     setTimeout(initPopupButtons, 100);
     return;
   }
 
-  // Кнопки знайдено — навішуємо обробники
   openPopupBtns.forEach(button => {
     button.addEventListener("click", function () {
       lastClickedButton = button;
-      const buttonRect = button.getBoundingClientRect();
-      const popupWidth = popupOverlay.offsetWidth;
-      const popupHeight = popupOverlay.offsetHeight;
 
-        popupOverlay.style.transition = "none";
-        popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupHeight / 2}px) scale(0)`;
-        
-        popupOverlay.classList.add("show");
-        
-        setTimeout(() => {
-            popupOverlay.style.transition = "transform 0.3s ease-out";
-            popupOverlay.style.transform = `translate(${window.innerWidth / 2 - popupWidth / 2}px, ${window.innerHeight / 2 - popupHeight / 2}px) scale(1)`;
-        }, 10);
+      // Перевірка наявності всіх необхідних data-атрибутів
+      const requiredAttributes = ["імя", "порода", "вік", "розмір", "місто", "фото", "чекає-господаря", "телефон"];
+      const missingAttr = requiredAttributes.filter(attr => !button.dataset[attr]);
 
-        document.body.classList.add('lock');
-
-      //Клонування зображення
-      const popupImgContainer = document.querySelector(".popup__img");
-      const originalImg = button.closest('.pet-carousel__card').querySelector("img");
-      if (originalImg && popupImgContainer) {
-        const imgClone = originalImg.cloneNode(true);
-        imgClone.classList.add("popup-clone-img");
-        popupImgContainer.innerHTML = "";
-        popupImgContainer.appendChild(imgClone);
+      if (missingAttr.length > 0) {
+        console.warn("Відсутні data-атрибути:", missingAttr);
+        return;
       }
 
       // Вставлення текстових даних
-      document.getElementById("popupName").textContent = button.dataset.імя || "";
-      document.getElementById("popupBreed").textContent = button.dataset.порода || "";
-      document.getElementById("popupAge").textContent = button.dataset.вік || "";
-      document.getElementById("popupSize").textContent = button.dataset.розмір || "";
-      document.getElementById("popupCity").textContent = button.dataset.місто || "";
-     document.getElementById("popupWaits").textContent = button.getAttribute("data-чекає-господаря") || "";
+      document.getElementById("popupName").textContent = button.dataset.імя;
+      document.getElementById("popupBreed").textContent = button.dataset.порода;
+      document.getElementById("popupAge").textContent = button.dataset.вік;
+      document.getElementById("popupSize").textContent = button.dataset.розмір;
+      document.getElementById("popupCity").textContent = button.dataset.місто;
+      document.getElementById("popupPhone").textContent = button.dataset.телефон;
+      document.getElementById("popupPhone").href = `tel:${button.dataset.телефон.replace(/\s+/g, '')}`;
+      document.getElementById("popupWaits").textContent = button.getAttribute("data-чекає-господаря");
 
+      // Завантаження зображення
+      const popupImgContainer = document.querySelector(".popup__img");
+      const imgSrc = button.dataset.фото;
+      const img = new Image();
+      img.classList.add("popup-clone-img");
+      img.alt = button.dataset.імя || "Фото тваринки";
+      img.src = imgSrc;
+
+      img.onload = () => {
+        popupImgContainer.innerHTML = "";
+        popupImgContainer.appendChild(img);
+        openPopup(button); // відкриваємо тільки після завантаження
+      };
+
+      img.onerror = () => {
+        console.warn("Зображення не завантажено:", imgSrc);
+      };
     });
   });
 }
 
-// Запускаємо після завантаження DOM
+function openPopup(button) {
+  lastClickedButton = button;
+  
+  // Отримуємо координати кнопки одразу
+  const buttonRect = button.getBoundingClientRect();
+  const popupWidth = popupOverlay.offsetWidth;
+  const popupHeight = popupOverlay.offsetHeight;
+
+  // Початкова позиція (центр кнопки)
+  const startX = buttonRect.left + buttonRect.width / 2 - popupWidth / 2;
+  const startY = buttonRect.top + buttonRect.height / 2 - popupHeight / 2;
+  
+  // Кінцева позиція (центр екрана)
+  const endX = window.innerWidth / 2 - popupWidth / 2;
+  const endY = window.innerHeight / 2 - popupHeight / 2;
+
+  // Встановлюємо початкову позицію без анімації
+  popupOverlay.style.transition = 'none';
+  popupOverlay.style.transform = `translate(${startX}px, ${startY}px) scale(0)`;
+  popupOverlay.classList.add("show");
+  
+  // Використовуємо requestAnimationFrame для гарантії, що браузер відобразив початковий стан
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // Тепер включаємо анімацію
+      popupOverlay.style.transition = "transform 0.3s ease-out";
+      popupOverlay.style.transform = `translate(${endX}px, ${endY}px) scale(1)`;
+    });
+  });
+
+  document.body.classList.add('lock');
+}
+
+function closePopup() {
+  if (!lastClickedButton) return;
+
+    const buttonRect = lastClickedButton.getBoundingClientRect();
+
+    popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
+
+  setTimeout(() => {
+    popupOverlay.classList.remove("show");
+    document.body.classList.remove('lock');
+    lastClickedButton = null;
+
+    const popupImgContainer = document.querySelector(".popup__img");
+    if (popupImgContainer) {
+      popupImgContainer.innerHTML = "";
+    }
+
+    document.getElementById("popupName").textContent = "";
+    document.getElementById("popupBreed").textContent = "";
+    document.getElementById("popupAge").textContent = "";
+    document.getElementById("popupSize").textContent = "";
+    document.getElementById("popupCity").textContent = "";
+    document.getElementById("popupPhone").textContent = "";
+    document.getElementById("popupWaits").textContent = "";
+  }, 300);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initPopupButtons();
 });
@@ -257,48 +322,11 @@ popupOverlay.addEventListener("click", function (event) {
 
 closePopupBtn.addEventListener("click", closePopup);
 
-// Закриття попапу при зміні розміру вікна або орієнтації екрану
 window.addEventListener('resize', () => {
   if (popupOverlay.classList.contains('show')) {
     closePopup();
   }
 });
-// window.addEventListener('orientationchange', () => {
-//   if (popupOverlay.classList.contains('show')) {
-//     closePopup();
-//   }
-// });
-
-function closePopup() {
-  if (!lastClickedButton) return;
-
-  const buttonRect = lastClickedButton.getBoundingClientRect();
-
- popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
-
-  setTimeout(() => {
-    popupOverlay.classList.remove("show");
-    document.body.classList.remove('lock');
-    lastClickedButton = null;
-
-    //Видалення клону зображення
-    const popupImgContainer = document.querySelector(".popup__img");
-    if (popupImgContainer) {
-      popupImgContainer.innerHTML = "";
-    }
-
-    //Очистка текстових полів
-    document.getElementById("popupName").textContent = "";
-    document.getElementById("popupBreed").textContent = "";
-    document.getElementById("popupAge").textContent = "";
-    document.getElementById("popupSize").textContent = "";
-    document.getElementById("popupCity").textContent = "";
-    document.getElementById("popupWaits").textContent = "";
-    
-  }, 300);
-
-  
-}
 
 //карусель /////////////////////////////////////////////////////////////////////////////////////////////////////////
 const scrollContainer = document.querySelector('.pet-carousel__scroll');
@@ -513,7 +541,7 @@ function handleScrollOnce() {
     const rect = el.getBoundingClientRect();
     if (rect.top < window.innerHeight * 0.8 && rect.bottom > 0 && !el.dataset.animated) {
       el.classList.add('show');
-      el.dataset.animated = 'true'; // Позначаємо, що анімація вже відбулася
+      el.dataset.animated = 'true';
     }
   });
 }
@@ -523,7 +551,7 @@ window.addEventListener('load', handleScrollOnce);
 
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbwNZo_RKGbc75oTsw4agUyORRikPtxOuMuyVmgrIT6jn6fdtN4Qnr61Ok5_Atpafm5tdg/exec';
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbzrndlcrTs4V4u5E3-0UZp9_DMbWT4-Jai6qk0IVk1JdBKPQwpRjNOzUKjimBegGB7rKw/exec';
   const form = document.forms['submit-to-google-sheet'];
   const submitButton = document.getElementById('submit-button');
   const statusText = document.getElementById('form-status');
@@ -542,47 +570,74 @@ window.addEventListener('load', handleScrollOnce);
     const email = form.email.value.trim();
     const message = form.message.value.trim();
 
-    // Валідація полів
-    const nameRegex = /^[a-zA-Zа-яА-ЯіїєІЇЄ'’\s-]{2,}$/u;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function validateForm({ name, email, phone, message }) {
+  const nameRegex = /^[a-zA-Zа-яА-ЯіїєІЇЄ'’\s-]{2,}$/u;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const phoneRegex = /^(\+?38)?0\d{9}$/;
 
-    if (!nameRegex.test(name)) {
-      statusText.textContent = 'Введіть коректне імʼя.';
-      return;
-    }
+  if (!nameRegex.test(name)) {
+    return 'Введіть коректне імʼя.';
+  }
 
-    if (!emailRegex.test(email)) {
-      statusText.textContent = 'Введіть коректний email.';
-      return;
-    }
+  if (!phoneRegex.test(phone)) {
+    return 'Введіть коректний номер телефону.';
+  }
 
-    if (message.length < 3 || containsThreats(message)) {
-      statusText.textContent = 'Повідомлення містить заборонені символи або є надто коротким.';
-      return;
-    }
+  if (!emailRegex.test(email)) {
+    return 'Введіть коректний email.';
+  }
+
+  if (message.length < 3 || containsThreats(message)) {
+    return 'Повідомлення містить заборонені символи або є надто коротким.';
+  }
+
+  return 'OK';
+}
 
     // Встановити поточний час
     document.getElementById('timestamp').value = new Date().toLocaleString('uk-UA');
 
-    // Приховати кнопку, показати статус
-    submitButton.style.display = 'none';
-    statusText.textContent = 'Надсилання...';
+      submitButton.disabled = true;
+      submitButton.textContent = 'Чекати';
+      submitButton.classList.add('waiting');
 
-    fetch(scriptURL, {
-      method: 'POST',
-      body: new FormData(form)
-    })
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(data => {
-      statusText.textContent = 'Успішно надіслано!';
-      form.reset();
-    })
-    .catch(error => {
-      statusText.textContent = 'Помилка надсилання. Спробуйте ще раз.';
-      console.error('Помилка надсилання:', error.message);
-      submitButton.style.display = 'inline-block';
-    })
+      statusText.textContent = 'Надсилання...';
+      statusText.style.color = '#8400C9';
+      statusText.classList.add('visible');
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: new FormData(form)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => {
+        statusText.textContent = 'Успішно надіслано!';
+        statusText.style.color = '#32CD32';
+        form.reset();
+
+        setTimeout(() => {
+          statusText.classList.remove('visible');
+          submitButton.disabled = false;
+          submitButton.textContent = 'Надіслати';
+          submitButton.classList.remove('waiting');
+        }, 3000);
+      })
+      .catch(error => {
+        statusText.textContent = 'Помилка надсилання. Спробуйте ще раз.';
+        statusText.style.color = '#ff1e00ff';
+        console.error('Помилка надсилання:', error.message);
+
+        setTimeout(() => {
+          statusText.classList.remove('visible');
+          submitButton.disabled = false;
+          submitButton.textContent = 'Надіслати';
+          submitButton.classList.remove('waiting');
+        }, 3000);
+      });
+
+
+
   });
