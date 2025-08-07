@@ -909,7 +909,9 @@ form {
   position: relative;
   margin-bottom: 2rem;
 }
-
+.form-group:last-of-type {
+  margin-bottom: 5px;
+}
 
     .custom-select-container {
   display: flex;
@@ -1143,4 +1145,3 @@ button.waiting:hover {
   opacity: 1;
   transform: translate(0, 0);
 }
-
