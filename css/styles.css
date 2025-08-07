@@ -352,6 +352,12 @@ text-decoration: none;
  color: #0077cc;
  transition: color 0.3s ease;
 }
+
+b {
+   white-space: nowrap;
+   font-weight: 700;
+   color: #FF69B4;
+}
 ul {
  width: 100%;
   padding: 0px 10px;
