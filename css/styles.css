@@ -86,7 +86,7 @@ body.lock {
   height: 100vh; /* запобігає прокрутці на мобільних */
 }
 /*  */
- 
+
 
   
 /*  */
@@ -290,7 +290,7 @@ h1 {
 
 main {
  width: 100vw;
- min-height: 100vh;
+ /* min-height: 100vh; */
 
  display: flex;
  justify-content: center;
@@ -927,7 +927,7 @@ form {
 }
 
 .custom-select-container .custom-option {
-
+ color: #6d6d6d;
   padding: 12px 20px;
   text-align: center;
   font-size: 18px;
@@ -936,7 +936,6 @@ form {
   border-radius: 10px;
   margin-bottom: 20px;
   cursor: pointer;
-  color: #808080
   user-select: none;
   transition: border-color 0.3s, background-color 0.3s, color 0.3s;
 }
@@ -1129,7 +1128,104 @@ button.waiting:hover {
 
 }
 
+/* .............................................................................................................................. */
+footer {
 
+	width: 100%;
+  margin-top: 30px;
+	height: auto;
+	background-color: #00197e;
+ /* border: solid 4px #403332; */
+  position: relative;
+	display: flex;
+	flex-direction: column;
+  justify-content: center;
+	align-items: center;
+}
+.block__footer{
+    width: 90%;
+   display: flex;
+   justify-content: space-between;
+   align-items: flex-start;
+   
+}
+.list__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.link__footer a{
+
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 5px;
+    font-size: 16px;
+   
+    color: #ffffff;
+
+}
+
+
+.link__footer:hover .img__list{
+    transform: scale(1.1);
+}
+
+.list__footer p {
+    color: #a08bff;
+}
+
+.block__footer-bottom{
+
+    background-color: #00197e;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  
+
+}
+.block__footer-bottom p{
+
+   
+   
+    color:#ffffff;
+    font-size: 14px;
+
+}
+
+@media (max-width: 1250px) {
+
+
+
+    .link__footer a{
+    
+    margin: 3px 3px;
+    font-size: 14px;
+
+    
+    }
+
+
+}
+
+@media (max-width: 1000px) {
+    footer {
+
+        min-height: 100px;
+        
+    }
+    .block__footer{
+      
+    flex-direction: column;
+ 
+    }
+    
+
+    
+
+}
 /*  */
 /* Анімація тільки для всього, крім h2 */
 /* Початковий стан */
@@ -1152,3 +1248,4 @@ button.waiting:hover {
   opacity: 1;
   transform: translate(0, 0);
 }
+
