@@ -274,14 +274,14 @@ header {
     justify-content: center;
     align-items: center;
     text-align: center;
-
+background-color: #c82ad3;
 }
 
 h1 {
    font-family: "LXGW Marker Gothic", sans-serif;
   font-weight: 800;
   font-style: normal;
-color: #c82ad3;
+color: #fff;
   text-transform: uppercase;
     font-size: 40px;
 }
