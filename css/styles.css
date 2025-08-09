@@ -393,6 +393,7 @@ h1 {
 
 .slide__panel img {
  position: absolute;
+  z-index: 10;
  bottom: -1%;
  right: -1%;
  width: 330px;
@@ -610,9 +611,30 @@ li {
         font-size: 16px;
     }
 }
-
+/* //////////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 .pet-support {
     width: 90%;
+    position: relative;
+}
+
+#section4 {
+    position: relative;
+}
+.support__img1 {
+    display: block;
+    position: absolute;
+     z-index: 10;
+top: 0;
+ left: 50%;
+ width: 300px;
+}
+.support__img2 {
+    display: block;
+    position: absolute;
+     z-index: 10;
+top: -315px;
+ left: 5px;
+ width: 330px;
 }
 .pet-support__block {
     padding: 20px;
@@ -643,6 +665,8 @@ li {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
+
+
 .pet-support__donate:hover {
     background-color: #0066ff;
 }
@@ -697,8 +721,32 @@ li {
     display: flex;
     align-items: center;
 }
+@media (max-width: 1300px) {
 
+
+.support__img1 {
+top: 140px;
+ left: 50%;
+ width: 250px;
+}
+.support__img2 {
+ 
+top: -233px;
+ left: 5px;
+ width: 250px;
+}
+}
 @media (max-width: 1100px) {
+
+.support__img1 {
+    display: none;
+  
+}
+.support__img2 {
+    display: none;
+}
+
+
     .requisite-logo p {
         font-size: 12px;
         margin: 5px 0;
@@ -1226,6 +1274,15 @@ footer {
     justify-content: center;
     align-items: center;
 }
+
+footer img {
+    display: block;
+    position: absolute;
+     z-index: 10;
+top: -330px;
+ left: 1%;
+ width: 330px;
+}
 .block__footer {
     width: 90%;
     display: flex;
@@ -1248,16 +1305,16 @@ footer {
     color: #ffffff;
 }
 
-.link__footer:hover .img__list {
-    transform: scale(1.1);
-}
+
 
 .list__footer p {
     color: #a08bff;
 }
 
 .block__footer-bottom {
+   
     background-color: #00197e;
+    
     width: 100%;
     display: flex;
     justify-content: center;
@@ -1267,7 +1324,18 @@ footer {
     color: #ffffff;
     font-size: 12px;
 }
+@media (max-width: 1300px) {
 
+footer img {
+    display: block;
+    position: absolute;
+     z-index: 10;
+top: -250px;
+ left: 1%;
+ width: 250px;
+}
+
+}
 @media (max-width: 1250px) {
     .link__footer a {
         margin: 3px 3px;
