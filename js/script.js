@@ -340,22 +340,37 @@ const handleSlideChange = (direction) => {
 const nextSlide = () => handleSlideChange('next');
 const prevSlide = () => handleSlideChange('prev');
 
-// Додамо змінну для відстеження типу останньої події
-let lastInputType = null;
+let touchStartY = 0;
+let isHorizontalSwipe = null; // null - ще не визначили напрям
 
 const handleTouchStart = (e) => {
     if (!allowInteraction) return;
     lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
     touchEndX = touchStartX;
+    isHorizontalSwipe = null;
 };
 
 const handleTouchMove = (e) => {
     if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
+
+    const deltaX = e.touches[0].clientX - touchStartX;
+    const deltaY = e.touches[0].clientY - touchStartY;
+
+    // Якщо напрям ще не визначений
+    if (isHorizontalSwipe === null) {
+        isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+    }
+
+    // Якщо це вертикальний свайп — даємо сторінці скролитися
+    if (!isHorizontalSwipe) return;
+
+    // Якщо горизонтальний свайп — блокуємо дефолт
     e.preventDefault();
     touchEndX = e.touches[0].clientX;
-    
-    // Візуальний фідбек під час свайпу
+
+    // Візуальний фідбек
     const diff = touchStartX - touchEndX;
     const maxOffset = slideWidth * 0.3;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
@@ -368,22 +383,25 @@ const handleTouchMove = (e) => {
 const handleTouchEnd = () => {
     if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
     
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > SWIPE_THRESHOLD) {
-        if (diff > 0) {
-            nextSlide();
+    if (isHorizontalSwipe) {
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > SWIPE_THRESHOLD) {
+            if (diff > 0) {
+                nextSlide();
+            } else {
+                prevSlide();
+            }
         } else {
-            prevSlide();
+            slideBlock.style.transition = 'transform 0.3s ease';
+            slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
         }
-    } else {
-        // Повертаємо на місце, якщо свайп був замалий
-        slideBlock.style.transition = 'transform 0.3s ease';
-        slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
     }
     
     touchStartX = 0;
     touchEndX = 0;
+    isHorizontalSwipe = null;
 };
+
 
 const handleMouseDown = (e) => {
     if (IS_TOUCH_DEVICE || !allowInteraction) return;
