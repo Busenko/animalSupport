@@ -213,7 +213,7 @@ window.addEventListener('resize', () => {
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // слайдер...................................................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VISIBLE_SLIDES = 7;
+const VISIBLE_SLIDES = 5;
 const CENTER_INDEX = Math.floor(VISIBLE_SLIDES / 2);
 const SWIPE_THRESHOLD = 50;
 const IS_TOUCH_DEVICE = 'ontouchstart' in window;
@@ -340,28 +340,54 @@ const handleSlideChange = (direction) => {
 const nextSlide = () => handleSlideChange('next');
 const prevSlide = () => handleSlideChange('prev');
 
+// Додамо змінну для відстеження типу останньої події
+let lastInputType = null;
+
 const handleTouchStart = (e) => {
     if (!allowInteraction) return;
+    lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
+    touchEndX = touchStartX;
 };
 
 const handleTouchMove = (e) => {
-    if (!allowInteraction || !touchStartX) return;
+    if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
+    e.preventDefault();
     touchEndX = e.touches[0].clientX;
-    const diff = touchStartX - touchEndX;
     
+    // Візуальний фідбек під час свайпу
+    const diff = touchStartX - touchEndX;
+    const maxOffset = slideWidth * 0.3;
+    const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
+    
+    const currentTranslate = -CENTER_INDEX * slideWidth;
+    slideBlock.style.transition = 'none';
+    slideBlock.style.transform = `translateX(${currentTranslate - offset}px)`;
+};
+
+const handleTouchEnd = () => {
+    if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
+    
+    const diff = touchStartX - touchEndX;
     if (Math.abs(diff) > SWIPE_THRESHOLD) {
         if (diff > 0) {
             nextSlide();
         } else {
             prevSlide();
         }
-        touchStartX = 0;
+    } else {
+        // Повертаємо на місце, якщо свайп був замалий
+        slideBlock.style.transition = 'transform 0.3s ease';
+        slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
     }
+    
+    touchStartX = 0;
+    touchEndX = 0;
 };
 
 const handleMouseDown = (e) => {
     if (IS_TOUCH_DEVICE || !allowInteraction) return;
+    lastInputType = 'mouse';
     isDragging = true;
     dragStartX = e.clientX;
     slideBlock.style.transition = 'none';
@@ -369,7 +395,7 @@ const handleMouseDown = (e) => {
 };
 
 const handleMouseMove = (e) => {
-    if (!isDragging || IS_TOUCH_DEVICE || !allowInteraction) return;
+    if (!isDragging || IS_TOUCH_DEVICE || lastInputType !== 'mouse' || !allowInteraction) return;
     const x = e.clientX;
     dragOffset = x - dragStartX;
     
@@ -381,7 +407,7 @@ const handleMouseMove = (e) => {
 };
 
 const handleMouseUp = (e) => {
-    if (!isDragging || IS_TOUCH_DEVICE || !allowInteraction) return;
+    if (!isDragging || IS_TOUCH_DEVICE || lastInputType !== 'mouse' || !allowInteraction) return;
     isDragging = false;
     
     if (Math.abs(dragOffset) > SWIPE_THRESHOLD) {
@@ -398,40 +424,31 @@ const handleMouseUp = (e) => {
     dragOffset = 0;
 };
 
-const handleSlideClick = (e) => {
-    if (IS_TOUCH_DEVICE || isDragging || !allowInteraction) return;
-    
-    const rect = slider.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const sliderCenter = rect.width / 2;
-    
-    if (clickX > sliderCenter) {
-        nextSlide();
-    } else {
-        prevSlide();
-    }
-};
-
 const initSlider = () => {
     slides = Array.from(document.querySelectorAll('.slide'));
-    applySlideSizes(); // Тепер функція визначена перед викликом
+    applySlideSizes();
     renderSlides();
     slideBlock.style.opacity = '1';
     slideBlock.style.transition = 'opacity 0.5s ease';
     setHeights();
     
     if (IS_TOUCH_DEVICE) {
+        // Для тач-пристроїв
         slider.addEventListener('touchstart', handleTouchStart, { passive: false });
         slider.addEventListener('touchmove', handleTouchMove, { passive: false });
+        slider.addEventListener('touchend', handleTouchEnd, { passive: false });
+        slider.addEventListener('touchcancel', handleTouchEnd, { passive: false });
     } else {
+        // Для десктопних пристроїв
         slider.addEventListener('mousedown', handleMouseDown);
         slider.addEventListener('mousemove', handleMouseMove);
         slider.addEventListener('mouseup', handleMouseUp);
         slider.addEventListener('mouseleave', handleMouseUp);
-        // slider.addEventListener('click', handleSlideClick);
     }
+    
+    // Заборона контекстного меню для уникнення конфліктів
+    slider.addEventListener('contextmenu', (e) => e.preventDefault());
 };
-
 arrowNext.addEventListener('click', (e) => {
     e.stopPropagation();
     nextSlide();
