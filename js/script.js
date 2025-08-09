@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const img = document.createElement("img");
       img.src = card["Фото"];
       img.alt = card["Ім'я"] || "Тваринка";
+      img.loading = "lazy";
 
       cardEl.appendChild(button);
       cardEl.appendChild(img);
@@ -208,6 +209,249 @@ window.addEventListener('resize', () => {
   if (popupOverlay.classList.contains('show')) {
     closePopup();
   }
+});
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// слайдер...................................................................................................................
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+const VISIBLE_SLIDES = 7;
+const CENTER_INDEX = Math.floor(VISIBLE_SLIDES / 2);
+const SWIPE_THRESHOLD = 50;
+const IS_TOUCH_DEVICE = 'ontouchstart' in window;
+
+const setHeights = (targetSlide = null) => {
+    const target = targetSlide || document.querySelector('.slide:not(.inactive)');
+    if (!target) return;
+
+    const slideTop = target.querySelector('.slide__top');
+    const slideBottom = target.querySelector('.slide__bottom');
+    const slideHeight = target.querySelector('.img__height')?.offsetHeight || 0;
+
+    const slideTopHeight = slideTop?.offsetHeight || 0;
+    const slideBottomHeight = slideBottom?.offsetHeight || 0;
+
+    document.documentElement.style.setProperty('--slide-height', `${slideHeight}px`);
+    document.documentElement.style.setProperty('--slide-top-height', `${slideTopHeight}px`);
+    document.documentElement.style.setProperty('--slide-bottom-height', `${slideBottomHeight}px`);
+};
+
+const slider = document.querySelector('.slider');
+const slideBlock = document.querySelector('.slider-block');
+const arrowNext = document.querySelector('.arrow-next');
+const arrowPrev = document.querySelector('.arrow-prev');
+
+let slideWidth = 0;
+let isAnimating = false;
+let currentIndex = 0;
+let slides = [];
+let touchStartX = 0;
+let touchEndX = 0;
+let isDragging = false;
+let dragStartX = 0;
+let dragOffset = 0;
+let allowInteraction = true;
+
+// Функція applySlideSizes тепер визначена перед використанням
+const applySlideSizes = () => {
+    slideWidth = slider.clientWidth;
+    if (slideWidth <= 0) return;
+    slides.forEach(slide => {
+        slide.style.width = `${slideWidth}px`;
+    });
+};
+
+const getIndex = (i, total) => (i + total) % total;
+
+const renderSlides = () => {
+    while (slideBlock.firstChild) slideBlock.removeChild(slideBlock.firstChild);
+
+    const total = slides.length;
+
+    for (let i = 0; i < VISIBLE_SLIDES; i++) {
+        const index = getIndex(currentIndex + i - CENTER_INDEX, total);
+        const slide = slides[index];
+        const clone = slide.cloneNode(true);
+
+        clone.classList.add('slide');
+        clone.style.width = `${slideWidth}px`;
+        clone.style.transition = 'transform 0.6s ease, opacity 0.6s ease';
+
+        if (i === CENTER_INDEX) {
+            clone.classList.remove('inactive');
+            clone.style.transform = 'scale(1)';
+            clone.style.opacity = '1';
+            clone.style.zIndex = '2';
+        } else {
+            clone.classList.add('inactive');
+            clone.style.transform = 'scale(0.95)';
+            clone.style.opacity = '0.6';
+            clone.style.zIndex = '1';
+        }
+
+        slideBlock.appendChild(clone);
+    }
+
+    slideBlock.style.transition = 'none';
+    slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
+
+    const activeSlide = slideBlock.children[CENTER_INDEX];
+    if (activeSlide) setHeights(activeSlide);
+};
+
+const handleSlideChange = (direction) => {
+    if (isAnimating || !allowInteraction) return;
+    
+    allowInteraction = false;
+    isAnimating = true;
+
+    const total = slides.length;
+    const newIndex = direction === 'next'
+        ? (currentIndex + 1) % total
+        : (currentIndex - 1 + total) % total;
+
+    const shift = direction === 'next' ? CENTER_INDEX + 1 : CENTER_INDEX - 1;
+
+    const oldCenter = slideBlock.children[CENTER_INDEX];
+    if (oldCenter) {
+        oldCenter.style.transform = 'scale(0.95)';
+        oldCenter.style.opacity = '0.6';
+        oldCenter.style.zIndex = '1';
+    }
+
+    const futureCenter = slideBlock.children[shift];
+    if (futureCenter) {
+        futureCenter.classList.remove('inactive');
+        futureCenter.style.transform = 'scale(1)';
+        futureCenter.style.opacity = '1';
+        futureCenter.style.zIndex = '2';
+    }
+
+    const newTranslate = -(shift * slideWidth);
+    slideBlock.style.transition = 'transform 0.6s ease';
+    slideBlock.style.transform = `translateX(${newTranslate}px)`;
+
+    slideBlock.addEventListener('transitionend', () => {
+        currentIndex = newIndex;
+        renderSlides();
+        isAnimating = false;
+        allowInteraction = true;
+    }, { once: true });
+};
+
+const nextSlide = () => handleSlideChange('next');
+const prevSlide = () => handleSlideChange('prev');
+
+const handleTouchStart = (e) => {
+    if (!allowInteraction) return;
+    touchStartX = e.touches[0].clientX;
+};
+
+const handleTouchMove = (e) => {
+    if (!allowInteraction || !touchStartX) return;
+    touchEndX = e.touches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+        if (diff > 0) {
+            nextSlide();
+        } else {
+            prevSlide();
+        }
+        touchStartX = 0;
+    }
+};
+
+const handleMouseDown = (e) => {
+    if (IS_TOUCH_DEVICE || !allowInteraction) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    slideBlock.style.transition = 'none';
+    e.preventDefault();
+};
+
+const handleMouseMove = (e) => {
+    if (!isDragging || IS_TOUCH_DEVICE || !allowInteraction) return;
+    const x = e.clientX;
+    dragOffset = x - dragStartX;
+    
+    const maxOffset = slideWidth * 0.3;
+    dragOffset = Math.max(-maxOffset, Math.min(maxOffset, dragOffset));
+    
+    const currentTranslate = -CENTER_INDEX * slideWidth;
+    slideBlock.style.transform = `translateX(${currentTranslate + dragOffset}px)`;
+};
+
+const handleMouseUp = (e) => {
+    if (!isDragging || IS_TOUCH_DEVICE || !allowInteraction) return;
+    isDragging = false;
+    
+    if (Math.abs(dragOffset) > SWIPE_THRESHOLD) {
+        if (dragOffset > 0) {
+            prevSlide();
+        } else {
+            nextSlide();
+        }
+    } else {
+        slideBlock.style.transition = 'transform 0.3s ease';
+        slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
+    }
+    
+    dragOffset = 0;
+};
+
+const handleSlideClick = (e) => {
+    if (IS_TOUCH_DEVICE || isDragging || !allowInteraction) return;
+    
+    const rect = slider.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const sliderCenter = rect.width / 2;
+    
+    if (clickX > sliderCenter) {
+        nextSlide();
+    } else {
+        prevSlide();
+    }
+};
+
+const initSlider = () => {
+    slides = Array.from(document.querySelectorAll('.slide'));
+    applySlideSizes(); // Тепер функція визначена перед викликом
+    renderSlides();
+    slideBlock.style.opacity = '1';
+    slideBlock.style.transition = 'opacity 0.5s ease';
+    setHeights();
+    
+    if (IS_TOUCH_DEVICE) {
+        slider.addEventListener('touchstart', handleTouchStart, { passive: false });
+        slider.addEventListener('touchmove', handleTouchMove, { passive: false });
+    } else {
+        slider.addEventListener('mousedown', handleMouseDown);
+        slider.addEventListener('mousemove', handleMouseMove);
+        slider.addEventListener('mouseup', handleMouseUp);
+        slider.addEventListener('mouseleave', handleMouseUp);
+        // slider.addEventListener('click', handleSlideClick);
+    }
+};
+
+arrowNext.addEventListener('click', (e) => {
+    e.stopPropagation();
+    nextSlide();
+});
+
+arrowPrev.addEventListener('click', (e) => {
+    e.stopPropagation();
+    prevSlide();
+});
+
+window.addEventListener('resize', () => {
+    applySlideSizes();
+    renderSlides();
+});
+
+document.addEventListener('DOMContentLoaded', initSlider);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
 });
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //карусель ..............................................................................................................
