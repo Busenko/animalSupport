@@ -299,7 +299,7 @@ const renderSlides = () => {
 
 const handleSlideChange = (direction) => {
     if (isAnimating || !allowInteraction) return;
-
+    
     allowInteraction = false;
     isAnimating = true;
 
@@ -329,25 +329,12 @@ const handleSlideChange = (direction) => {
     slideBlock.style.transition = 'transform 0.6s ease';
     slideBlock.style.transform = `translateX(${newTranslate}px)`;
 
-    // Основний обробник завершення transition
-    const onTransitionEnd = (e) => {
-        if (e.propertyName !== 'transform') return;
+    slideBlock.addEventListener('transitionend', () => {
         currentIndex = newIndex;
         renderSlides();
         isAnimating = false;
         allowInteraction = true;
-    };
-    slideBlock.addEventListener('transitionend', onTransitionEnd, { once: true });
-
-    // Запасний таймер, якщо transitionend не спрацює
-    setTimeout(() => {
-        if (isAnimating) {
-            currentIndex = newIndex;
-            renderSlides();
-            isAnimating = false;
-            allowInteraction = true;
-        }
-    }, 700); // трохи більше за 0.6s
+    }, { once: true });
 };
 
 const nextSlide = () => handleSlideChange('next');
@@ -357,7 +344,7 @@ let touchStartY = 0;
 let isHorizontalSwipe = null; // null - ще не визначили напрям
 
 const handleTouchStart = (e) => {
-    if (!allowInteraction) return;
+    if (!allowInteraction || isAnimating) return; // блокуємо свайп під час анімації
     lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
@@ -366,35 +353,36 @@ const handleTouchStart = (e) => {
 };
 
 const handleTouchMove = (e) => {
-    if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
+    if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
 
     const deltaX = e.touches[0].clientX - touchStartX;
     const deltaY = e.touches[0].clientY - touchStartY;
 
-    // Якщо напрям ще не визначений
     if (isHorizontalSwipe === null) {
-        isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            isHorizontalSwipe = true;
+        } else {
+            isHorizontalSwipe = false;
+            return; // даємо сторінці скролитися, але свайп слайдера не запускаємо
+        }
     }
 
-    // Якщо це вертикальний свайп — даємо сторінці скролитися
     if (!isHorizontalSwipe) return;
 
-    // Якщо горизонтальний свайп — блокуємо дефолт
-    e.preventDefault();
+    e.preventDefault(); // блокуємо скрол тільки якщо горизонтальний свайп
     touchEndX = e.touches[0].clientX;
 
-    // Візуальний фідбек
     const diff = touchStartX - touchEndX;
     const maxOffset = slideWidth * 0.3;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
-    
+
     const currentTranslate = -CENTER_INDEX * slideWidth;
     slideBlock.style.transition = 'none';
     slideBlock.style.transform = `translateX(${currentTranslate - offset}px)`;
 };
 
 const handleTouchEnd = () => {
-    if (!allowInteraction || lastInputType !== 'touch') return;
+    if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
 
     if (isHorizontalSwipe) {
         const diff = touchStartX - touchEndX;
@@ -407,14 +395,6 @@ const handleTouchEnd = () => {
         } else {
             slideBlock.style.transition = 'transform 0.3s ease';
             slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
-
-            // Скидання анімації, якщо свайп не завершено
-            setTimeout(() => {
-                if (isAnimating) {
-                    isAnimating = false;
-                    allowInteraction = true;
-                }
-            }, 400);
         }
     }
 
@@ -422,13 +402,8 @@ const handleTouchEnd = () => {
     touchEndX = 0;
     isHorizontalSwipe = null;
 };
-slider.addEventListener('touchcancel', () => {
-    // Скидання при перериванні свайпу
-    slideBlock.style.transition = 'none';
-    slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
-    isAnimating = false;
-    allowInteraction = true;
-});
+
+
 
 const handleMouseDown = (e) => {
     if (IS_TOUCH_DEVICE || !allowInteraction) return;
