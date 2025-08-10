@@ -344,12 +344,12 @@ let touchStartY = 0;
 let isHorizontalSwipe = null; // null - ще не визначили напрям
 
 const handleTouchStart = (e) => {
-    if (!allowInteraction || isAnimating) return; // блокуємо свайп під час анімації
+    if (!allowInteraction || isAnimating) return;
     lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchEndX = touchStartX;
-    isHorizontalSwipe = null;
+    isHorizontalSwipe = null; // напрямок ще не визначили
 };
 
 const handleTouchMove = (e) => {
@@ -358,20 +358,22 @@ const handleTouchMove = (e) => {
     const deltaX = e.touches[0].clientX - touchStartX;
     const deltaY = e.touches[0].clientY - touchStartY;
 
+    // якщо ще не визначили напрямок свайпу
     if (isHorizontalSwipe === null) {
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            isHorizontalSwipe = true;
+            isHorizontalSwipe = true; // горизонтальний свайп
         } else {
-            isHorizontalSwipe = false;
-            return; // даємо сторінці скролитися, але свайп слайдера не запускаємо
+            isHorizontalSwipe = false; // вертикальний скрол
+            return; // даємо сторінці скролитися
         }
     }
 
-    if (!isHorizontalSwipe) return;
+    if (!isHorizontalSwipe) return; // якщо визначили, що вертикальний — не чіпаємо
 
-    e.preventDefault(); // блокуємо скрол тільки якщо горизонтальний свайп
+    // тільки тут блокуємо скрол
+    e.preventDefault();
+
     touchEndX = e.touches[0].clientX;
-
     const diff = touchStartX - touchEndX;
     const maxOffset = slideWidth * 0.3;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
@@ -402,7 +404,6 @@ const handleTouchEnd = () => {
     touchEndX = 0;
     isHorizontalSwipe = null;
 };
-
 
 
 const handleMouseDown = (e) => {
