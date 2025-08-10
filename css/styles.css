@@ -366,13 +366,13 @@ h1 {
 }
 
 .panel2 {
-    background-color: #f2ffef;
+    background-color: #f8fff6;
     border: solid 4px #46d32a;
     color: #46d32a;
     border-radius: 10px;
 }
 .panel3 {
-    background-color: #ecfffe;
+    background-color: #f5fffe;
     border: solid 4px #2ad3cd;
     color: #2ad3cd;
     border-radius: 10px;
@@ -463,12 +463,12 @@ h1 {
  width: 250px;
 }
 
-   
+
 
 }
 @media (max-width: 1100px) {
 
-.logo__img {
+   .logo__img {
     
     width: 160px;
     height: auto;
