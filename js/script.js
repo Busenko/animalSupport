@@ -341,20 +341,43 @@ const nextSlide = () => handleSlideChange('next');
 const prevSlide = () => handleSlideChange('prev');
 
 let touchStartY = 0;
-let isHorizontalSwipe = null; // null - ще не визначили напрям
+let isHorizontalSwipe = null; // Will be true for horizontal, false for vertical
 
 const handleTouchStart = (e) => {
     if (!allowInteraction || isAnimating) return;
     lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
     touchEndX = touchStartX;
+    touchEndY = touchStartY;
+    isHorizontalSwipe = null; // Reset direction determination
 };
 
 const handleTouchMove = (e) => {
     if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
 
-    // Не блокуємо вертикальний скрол взагалі
     touchEndX = e.touches[0].clientX;
+    touchEndY = e.touches[0].clientY;
+
+    // Determine swipe direction if not already determined
+    if (isHorizontalSwipe === null) {
+        const dx = Math.abs(touchEndX - touchStartX);
+        const dy = Math.abs(touchEndY - touchStartY);
+        
+        // Determine primary direction (with some threshold)
+        if (dx > dy && dx > 5) {
+            isHorizontalSwipe = true;
+        } else if (dy > dx && dy > 5) {
+            isHorizontalSwipe = false;
+            return; // It's a vertical scroll, don't interfere
+        }
+    }
+
+    // Only proceed if it's a horizontal swipe
+    if (isHorizontalSwipe !== true) return;
+
+    // Prevent default to avoid page scroll during horizontal swipe
+    e.preventDefault();
 
     const diff = touchStartX - touchEndX;
     const maxOffset = slideWidth * 0.3;
@@ -368,20 +391,27 @@ const handleTouchMove = (e) => {
 const handleTouchEnd = () => {
     if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
 
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > SWIPE_THRESHOLD) {
-        if (diff > 0) {
-            nextSlide();
+    // Only handle swipe if it was determined to be horizontal
+    if (isHorizontalSwipe === true) {
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > SWIPE_THRESHOLD) {
+            if (diff > 0) {
+                nextSlide();
+            } else {
+                prevSlide();
+            }
         } else {
-            prevSlide();
+            slideBlock.style.transition = 'transform 0.3s ease';
+            slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
         }
-    } else {
-        slideBlock.style.transition = 'transform 0.3s ease';
-        slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
     }
 
+    // Reset all touch variables
     touchStartX = 0;
     touchEndX = 0;
+    touchStartY = 0;
+    touchEndY = 0;
+    isHorizontalSwipe = null;
 };
 
 
