@@ -340,59 +340,60 @@ const handleSlideChange = (direction) => {
 const nextSlide = () => handleSlideChange('next');
 const prevSlide = () => handleSlideChange('prev');
 
-let touchStartY = 0;
-let isHorizontalSwipe = null; // Will be true for horizontal, false for vertical
+let isLocked = false;
 
 const handleTouchStart = (e) => {
-    if (!allowInteraction || isAnimating) return;
+    if (!allowInteraction) return;
     lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchEndX = touchStartX;
-    touchEndY = touchStartY;
-    isHorizontalSwipe = null; // Reset direction determination
+    isHorizontalSwipe = null;
+    isLocked = false;
 };
 
 const handleTouchMove = (e) => {
-    if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
+    if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
 
-    touchEndX = e.touches[0].clientX;
-    touchEndY = e.touches[0].clientY;
+    const deltaX = e.touches[0].clientX - touchStartX;
+    const deltaY = e.touches[0].clientY - touchStartY;
 
-    // Determine swipe direction if not already determined
+    // Визначаємо напрям тільки один раз на початку свайпу
     if (isHorizontalSwipe === null) {
-        const dx = Math.abs(touchEndX - touchStartX);
-        const dy = Math.abs(touchEndY - touchStartY);
+        isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
         
-        // Determine primary direction (with some threshold)
-        if (dx > dy && dx > 5) {
-            isHorizontalSwipe = true;
-        } else if (dy > dx && dy > 5) {
-            isHorizontalSwipe = false;
-            return; // It's a vertical scroll, don't interfere
+        // Якщо це горизонтальний свайп - блокуємо скрол
+        if (isHorizontalSwipe) {
+            isLocked = true;
+            document.body.style.overflow = 'hidden';
         }
     }
 
-    // Only proceed if it's a horizontal swipe
-    if (isHorizontalSwipe !== true) return;
+    // Якщо це горизонтальний свайп - обробляємо його
+    if (isHorizontalSwipe) {
+        e.preventDefault();
+        touchEndX = e.touches[0].clientX;
 
-    // Prevent default to avoid page scroll during horizontal swipe
-    e.preventDefault();
-
-    const diff = touchStartX - touchEndX;
-    const maxOffset = slideWidth * 0.3;
-    const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
-
-    const currentTranslate = -CENTER_INDEX * slideWidth;
-    slideBlock.style.transition = 'none';
-    slideBlock.style.transform = `translateX(${currentTranslate - offset}px)`;
+        const diff = touchStartX - touchEndX;
+        const maxOffset = slideWidth * 0.3;
+        const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
+        
+        const currentTranslate = -CENTER_INDEX * slideWidth;
+        slideBlock.style.transition = 'none';
+        slideBlock.style.transform = `translateX(${currentTranslate - offset}px)`;
+    }
 };
 
 const handleTouchEnd = () => {
-    if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
+    if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
+    
+    // Відновлюємо скрол
+    if (isLocked) {
+        document.body.style.overflow = '';
+        isLocked = false;
+    }
 
-    // Only handle swipe if it was determined to be horizontal
-    if (isHorizontalSwipe === true) {
+    if (isHorizontalSwipe) {
         const diff = touchStartX - touchEndX;
         if (Math.abs(diff) > SWIPE_THRESHOLD) {
             if (diff > 0) {
@@ -405,12 +406,10 @@ const handleTouchEnd = () => {
             slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
         }
     }
-
-    // Reset all touch variables
+    
+    // Скидаємо всі змінні
     touchStartX = 0;
     touchEndX = 0;
-    touchStartY = 0;
-    touchEndY = 0;
     isHorizontalSwipe = null;
 };
 
