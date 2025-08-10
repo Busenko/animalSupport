@@ -275,7 +275,7 @@ h1 {
     font-family: "LXGW Marker Gothic", sans-serif;
     font-weight: 800;
     font-style: normal;
-    color: #1ddc00;
+    color: #2c82ff;
     text-transform: uppercase;
     font-size: 40px;
 }
@@ -1052,6 +1052,31 @@ top: -233px;
 /*  */
 
 /*  */
+.validation-message {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px 20px;
+  background-color: #ffffff;
+  color: #d8000c;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+  z-index: 9999;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.validation-message.visible {
+  display: block;
+  transform: translateY(0);
+  opacity: 1;
+}
+
 
 .contact-form {
     width: 90%;
