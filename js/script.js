@@ -213,10 +213,37 @@ window.addEventListener('resize', () => {
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // слайдер...................................................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// СЛАЙДЕР
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const VISIBLE_SLIDES = 5;
 const CENTER_INDEX = Math.floor(VISIBLE_SLIDES / 2);
 const SWIPE_THRESHOLD = 50;
 const IS_TOUCH_DEVICE = 'ontouchstart' in window;
+
+let slideWidth = 0;
+let isAnimating = false;
+let currentIndex = 0;
+let slides = [];
+let allowInteraction = true;
+
+// Для свайпів
+let lastInputType = null;
+let isHorizontalSwipe = null;
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let isLocked = false;
+
+// Для drag мишею
+let isDragging = false;
+let dragStartX = 0;
+let dragOffset = 0;
+
+const slider = document.querySelector('.slider');
+const slideBlock = document.querySelector('.slider-block');
+const arrowNext = document.querySelector('.arrow-next');
+const arrowPrev = document.querySelector('.arrow-prev');
 
 const setHeights = (targetSlide = null) => {
     const target = targetSlide || document.querySelector('.slide:not(.inactive)');
@@ -234,23 +261,6 @@ const setHeights = (targetSlide = null) => {
     document.documentElement.style.setProperty('--slide-bottom-height', `${slideBottomHeight}px`);
 };
 
-const slider = document.querySelector('.slider');
-const slideBlock = document.querySelector('.slider-block');
-const arrowNext = document.querySelector('.arrow-next');
-const arrowPrev = document.querySelector('.arrow-prev');
-
-let slideWidth = 0;
-let isAnimating = false;
-let currentIndex = 0;
-let slides = [];
-let touchStartX = 0;
-let touchEndX = 0;
-let isDragging = false;
-let dragStartX = 0;
-let dragOffset = 0;
-let allowInteraction = true;
-
-// Функція applySlideSizes тепер визначена перед використанням
 const applySlideSizes = () => {
     slideWidth = slider.clientWidth;
     if (slideWidth <= 0) return;
@@ -262,6 +272,7 @@ const applySlideSizes = () => {
 const getIndex = (i, total) => (i + total) % total;
 
 const renderSlides = () => {
+    if (!slides.length) return;
     while (slideBlock.firstChild) slideBlock.removeChild(slideBlock.firstChild);
 
     const total = slides.length;
@@ -298,8 +309,8 @@ const renderSlides = () => {
 };
 
 const handleSlideChange = (direction) => {
-    if (isAnimating || !allowInteraction) return;
-    
+    if (isAnimating || !allowInteraction || slides.length <= 1) return;
+
     allowInteraction = false;
     isAnimating = true;
 
@@ -329,19 +340,20 @@ const handleSlideChange = (direction) => {
     slideBlock.style.transition = 'transform 0.6s ease';
     slideBlock.style.transform = `translateX(${newTranslate}px)`;
 
-    slideBlock.addEventListener('transitionend', () => {
+    const onTransitionEnd = () => {
         currentIndex = newIndex;
         renderSlides();
         isAnimating = false;
         allowInteraction = true;
-    }, { once: true });
+    };
+
+    slideBlock.addEventListener('transitionend', onTransitionEnd, { once: true });
 };
 
 const nextSlide = () => handleSlideChange('next');
 const prevSlide = () => handleSlideChange('prev');
 
-let isLocked = false;
-
+// Touch Events
 const handleTouchStart = (e) => {
     if (!allowInteraction) return;
     lastInputType = 'touch';
@@ -358,18 +370,14 @@ const handleTouchMove = (e) => {
     const deltaX = e.touches[0].clientX - touchStartX;
     const deltaY = e.touches[0].clientY - touchStartY;
 
-    // Визначаємо напрям тільки один раз на початку свайпу
     if (isHorizontalSwipe === null) {
         isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
-        
-        // Якщо це горизонтальний свайп - блокуємо скрол
         if (isHorizontalSwipe) {
             isLocked = true;
             document.body.style.overflow = 'hidden';
         }
     }
 
-    // Якщо це горизонтальний свайп - обробляємо його
     if (isHorizontalSwipe) {
         e.preventDefault();
         touchEndX = e.touches[0].clientX;
@@ -377,7 +385,7 @@ const handleTouchMove = (e) => {
         const diff = touchStartX - touchEndX;
         const maxOffset = slideWidth * 0.3;
         const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
-        
+
         const currentTranslate = -CENTER_INDEX * slideWidth;
         slideBlock.style.transition = 'none';
         slideBlock.style.transform = `translateX(${currentTranslate - offset}px)`;
@@ -386,8 +394,7 @@ const handleTouchMove = (e) => {
 
 const handleTouchEnd = () => {
     if (!allowInteraction || lastInputType !== 'touch' || !touchStartX) return;
-    
-    // Відновлюємо скрол
+
     if (isLocked) {
         document.body.style.overflow = '';
         isLocked = false;
@@ -406,15 +413,13 @@ const handleTouchEnd = () => {
             slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
         }
     }
-    
-    // Скидаємо всі змінні
+
     touchStartX = 0;
     touchEndX = 0;
     isHorizontalSwipe = null;
 };
 
-
-
+// Mouse Events
 const handleMouseDown = (e) => {
     if (IS_TOUCH_DEVICE || !allowInteraction) return;
     lastInputType = 'mouse';
@@ -426,20 +431,19 @@ const handleMouseDown = (e) => {
 
 const handleMouseMove = (e) => {
     if (!isDragging || IS_TOUCH_DEVICE || lastInputType !== 'mouse' || !allowInteraction) return;
-    const x = e.clientX;
-    dragOffset = x - dragStartX;
-    
+    dragOffset = e.clientX - dragStartX;
+
     const maxOffset = slideWidth * 0.3;
     dragOffset = Math.max(-maxOffset, Math.min(maxOffset, dragOffset));
-    
+
     const currentTranslate = -CENTER_INDEX * slideWidth;
     slideBlock.style.transform = `translateX(${currentTranslate + dragOffset}px)`;
 };
 
-const handleMouseUp = (e) => {
+const handleMouseUp = () => {
     if (!isDragging || IS_TOUCH_DEVICE || lastInputType !== 'mouse' || !allowInteraction) return;
     isDragging = false;
-    
+
     if (Math.abs(dragOffset) > SWIPE_THRESHOLD) {
         if (dragOffset > 0) {
             prevSlide();
@@ -450,35 +454,36 @@ const handleMouseUp = (e) => {
         slideBlock.style.transition = 'transform 0.3s ease';
         slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
     }
-    
+
     dragOffset = 0;
 };
 
+// Init
 const initSlider = () => {
     slides = Array.from(document.querySelectorAll('.slide'));
+    if (!slides.length) return;
+
     applySlideSizes();
     renderSlides();
     slideBlock.style.opacity = '1';
     slideBlock.style.transition = 'opacity 0.5s ease';
     setHeights();
-    
+
     if (IS_TOUCH_DEVICE) {
-        // Для тач-пристроїв
         slider.addEventListener('touchstart', handleTouchStart, { passive: false });
         slider.addEventListener('touchmove', handleTouchMove, { passive: false });
         slider.addEventListener('touchend', handleTouchEnd, { passive: false });
         slider.addEventListener('touchcancel', handleTouchEnd, { passive: false });
     } else {
-        // Для десктопних пристроїв
         slider.addEventListener('mousedown', handleMouseDown);
         slider.addEventListener('mousemove', handleMouseMove);
         slider.addEventListener('mouseup', handleMouseUp);
         slider.addEventListener('mouseleave', handleMouseUp);
     }
-    
-    // Заборона контекстного меню для уникнення конфліктів
+
     slider.addEventListener('contextmenu', (e) => e.preventDefault());
 };
+
 arrowNext.addEventListener('click', (e) => {
     e.stopPropagation();
     nextSlide();
@@ -500,6 +505,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') nextSlide();
     if (e.key === 'ArrowLeft') prevSlide();
 });
+
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //карусель ..............................................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
