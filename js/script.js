@@ -347,33 +347,15 @@ const handleTouchStart = (e) => {
     if (!allowInteraction || isAnimating) return;
     lastInputType = 'touch';
     touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
     touchEndX = touchStartX;
-    isHorizontalSwipe = null; // напрямок ще не визначили
 };
 
 const handleTouchMove = (e) => {
     if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
 
-    const deltaX = e.touches[0].clientX - touchStartX;
-    const deltaY = e.touches[0].clientY - touchStartY;
-
-    // якщо ще не визначили напрямок свайпу
-    if (isHorizontalSwipe === null) {
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            isHorizontalSwipe = true; // горизонтальний свайп
-        } else {
-            isHorizontalSwipe = false; // вертикальний скрол
-            return; // даємо сторінці скролитися
-        }
-    }
-
-    if (!isHorizontalSwipe) return; // якщо визначили, що вертикальний — не чіпаємо
-
-    // тільки тут блокуємо скрол
-    e.preventDefault();
-
+    // Не блокуємо вертикальний скрол взагалі
     touchEndX = e.touches[0].clientX;
+
     const diff = touchStartX - touchEndX;
     const maxOffset = slideWidth * 0.3;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, diff));
@@ -386,24 +368,22 @@ const handleTouchMove = (e) => {
 const handleTouchEnd = () => {
     if (!allowInteraction || isAnimating || lastInputType !== 'touch' || !touchStartX) return;
 
-    if (isHorizontalSwipe) {
-        const diff = touchStartX - touchEndX;
-        if (Math.abs(diff) > SWIPE_THRESHOLD) {
-            if (diff > 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+        if (diff > 0) {
+            nextSlide();
         } else {
-            slideBlock.style.transition = 'transform 0.3s ease';
-            slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
+            prevSlide();
         }
+    } else {
+        slideBlock.style.transition = 'transform 0.3s ease';
+        slideBlock.style.transform = `translateX(-${CENTER_INDEX * slideWidth}px)`;
     }
 
     touchStartX = 0;
     touchEndX = 0;
-    isHorizontalSwipe = null;
 };
+
 
 
 const handleMouseDown = (e) => {
