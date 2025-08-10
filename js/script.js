@@ -758,25 +758,27 @@ window.addEventListener('load', handleScrollOnce);
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Відправка форми в гугл таблицю................................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbzrndlcrTs4V4u5E3-0UZp9_DMbWT4-Jai6qk0IVk1JdBKPQwpRjNOzUKjimBegGB7rKw/exec';
-  const form = document.forms['submit-to-google-sheet'];
-  const submitButton = document.getElementById('submit-button');
-  const statusText = document.getElementById('form-status');
+const scriptURL = 'https://script.google.com/macros/s/AKfycbzrndlcrTs4V4u5E3-0UZp9_DMbWT4-Jai6qk0IVk1JdBKPQwpRjNOzUKjimBegGB7rKw/exec';
+const form = document.forms['submit-to-google-sheet'];
+const submitButton = document.getElementById('submit-button');
+const statusText = document.getElementById('form-status');
+const validationMessage = document.getElementById('validation-message');
 
 
-  function containsThreats(input) {
-    const lower = input.toLowerCase();
-    return /<|>|script|javascript:/.test(lower);
-  }
+// Перевірка на загрозливі символи, формули, HTML, JS
+function containsThreats(input) {
+  const lower = input.toLowerCase().trim();
 
+  const forbiddenPatterns = [
+    /^=/, // формула
+    /<|>|script|javascript:/, // HTML або JS
+    /=importxml|=importhtml|=hyperlink|=script|=googlefinance|=image|=regexextract|=arrayformula/
+  ];
 
-  form.addEventListener('submit', e => {
-    e.preventDefault();
+  return forbiddenPatterns.some(pattern => pattern.test(lower));
+}
 
-    const name = form.name.value.trim();
-    const email = form.email.value.trim();
-    const message = form.message.value.trim();
-
+// Валідація форми
 function validateForm({ name, email, phone, message }) {
   const nameRegex = /^[a-zA-Zа-яА-ЯіїєІЇЄ'’\s-]{2,}$/u;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -794,57 +796,77 @@ function validateForm({ name, email, phone, message }) {
     return 'Введіть коректний email.';
   }
 
-  if (message.length < 3 || containsThreats(message)) {
+  if (message.length < 3 || message.length > 500 || containsThreats(message)) {
     return 'Повідомлення містить заборонені символи або є надто коротким.';
   }
 
   return 'OK';
 }
 
-    // Встановити поточний час
-    document.getElementById('timestamp').value = new Date().toLocaleString('uk-UA');
+// Обробка події надсилання
+form.addEventListener('submit', e => {
+  e.preventDefault();
 
-      submitButton.disabled = true;
-      submitButton.textContent = 'Чекати';
-      submitButton.classList.add('waiting');
+  const name = form.name.value.trim();
+  const email = form.email.value.trim();
+  const phone = form.phone.value.trim();
+  const message = form.message.value.trim();
 
-      statusText.textContent = 'Надсилання...';
-      statusText.style.color = '#8400C9';
-      statusText.classList.add('visible');
+  const validationResult = validateForm({ name, email, phone, message });
 
-      fetch(scriptURL, {
-        method: 'POST',
-        body: new FormData(form)
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then(data => {
-        statusText.textContent = 'Успішно надіслано!';
-        statusText.style.color = '#32CD32';
-        form.reset();
+ if (validationResult !== 'OK') {
+  validationMessage.textContent = validationResult;
+  validationMessage.classList.add('visible');
 
-        setTimeout(() => {
-          statusText.classList.remove('visible');
-          submitButton.disabled = false;
-          submitButton.textContent = 'Надіслати';
-          submitButton.classList.remove('waiting');
-        }, 3000);
-      })
-      .catch(error => {
-        statusText.textContent = 'Помилка надсилання. Спробуйте ще раз.';
-        statusText.style.color = '#ff1e00ff';
-        console.error('Помилка надсилання:', error.message);
+  setTimeout(() => {
+    validationMessage.classList.remove('visible');
+  }, 4000);
 
-        setTimeout(() => {
-          statusText.classList.remove('visible');
-          submitButton.disabled = false;
-          submitButton.textContent = 'Надіслати';
-          submitButton.classList.remove('waiting');
-        }, 3000);
-      });
+  return;
+}
 
 
+  // Встановити поточний час
+  document.getElementById('timestamp').value = new Date().toLocaleString('uk-UA');
 
-  });
+  submitButton.disabled = true;
+  submitButton.textContent = 'Чекати';
+  submitButton.classList.add('waiting');
+
+  statusText.textContent = 'Надсилання...';
+  statusText.style.color = '#8400C9';
+  statusText.classList.add('visible');
+
+  fetch(scriptURL, {
+    method: 'POST',
+    body: new FormData(form)
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    })
+    .then(data => {
+      statusText.textContent = 'Успішно надіслано!';
+      statusText.style.color = '#32CD32';
+      form.reset();
+
+      setTimeout(() => {
+        statusText.classList.remove('visible');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Надіслати';
+        submitButton.classList.remove('waiting');
+      }, 3000);
+    })
+    .catch(error => {
+      statusText.textContent = 'Помилка надсилання. Спробуйте ще раз.';
+      statusText.style.color = '#ff1e00ff';
+      console.error('Помилка надсилання:', error.message);
+
+      setTimeout(() => {
+        statusText.classList.remove('visible');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Надіслати';
+        submitButton.classList.remove('waiting');
+      }, 3000);
+    });
+});
