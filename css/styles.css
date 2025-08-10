@@ -468,6 +468,11 @@ h1 {
 }
 @media (max-width: 1100px) {
 
+.logo__img {
+    
+    width: 160px;
+    height: auto;
+}
   .container {
     
     width: 90vw;
