@@ -315,11 +315,11 @@ h1 {
 }
 
 /* Для нецентральних слайдів */
-/* .slide.inactive {
+.slide.inactive {
     opacity: 0.5;
 
     pointer-events: none;
-} */
+}
 
 .slider {
     width: 100%;
