@@ -271,6 +271,12 @@ header {
     overflow: hidden;
 }
 
+.logo__img {
+    pointer-events: none;
+    width: 200px;
+    height: auto;
+}
+
 h1 {
     font-family: "LXGW Marker Gothic", sans-serif;
     font-weight: 800;
@@ -278,6 +284,7 @@ h1 {
     color: #2c82ff;
     text-transform: uppercase;
     font-size: 40px;
+    margin-top: 0;
 }
 
 /* ..................................................................................................................... */
@@ -315,11 +322,11 @@ h1 {
 }
 
 /* Для нецентральних слайдів */
-.slide.inactive {
+/* .slide.inactive {
     opacity: 0.5;
 
     pointer-events: none;
-}
+} */
 
 .slider {
     width: 100%;
