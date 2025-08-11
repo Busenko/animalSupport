@@ -1,3 +1,7 @@
+const endpoint = 
+"https://script.google.com/macros/s/AKfycbwdzm0_EchNdvo5rRO2z7fj17XDYJL36NHXcH1UzlrBZy36bFyLXNsCYzmM3NjBmCcfNA/exec";
+
+
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Якорі..........................................................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21,10 +25,10 @@
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Отримуємо дані з таблиці...............................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 document.addEventListener("DOMContentLoaded", async () => {
   const carousel = document.getElementById("carousel");
-  const endpoint = "https://script.google.com/macros/s/AKfycbzrndlcrTs4V4u5E3-0UZp9_DMbWT4-Jai6qk0IVk1JdBKPQwpRjNOzUKjimBegGB7rKw/exec";
-
+  
   carousel.classList.add("loading"); // показати смугу
 
   try {
@@ -730,7 +734,7 @@ window.addEventListener('load', handleScrollOnce);
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Відправка форми в гугл таблицю................................................................................................
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const scriptURL = 'https://script.google.com/macros/s/AKfycbzrndlcrTs4V4u5E3-0UZp9_DMbWT4-Jai6qk0IVk1JdBKPQwpRjNOzUKjimBegGB7rKw/exec';
+// const scriptURL = 'https://script.google.com/macros/s/AKfycbzwu1774D5X9ruRpG3N5YVlSJIMEeArS1cNMBmEHe5U56jSoWldc9KYycHgBI_RG2t5AQ/exec';
 const form = document.forms['submit-to-google-sheet'];
 const submitButton = document.getElementById('submit-button');
 const statusText = document.getElementById('form-status');
@@ -809,7 +813,7 @@ form.addEventListener('submit', e => {
   statusText.style.color = '#8400C9';
   statusText.classList.add('visible');
 
-  fetch(scriptURL, {
+  fetch(endpoint, {
     method: 'POST',
     body: new FormData(form)
   })
