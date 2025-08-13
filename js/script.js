@@ -22,14 +22,112 @@ const endpoint =
     });
 
 
-add("popup-clone-img");
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Отримуємо дані з таблиці...............................................................................................
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const carousel = document.getElementById("carousel");
+  
+  carousel.classList.add("loading"); // показати смугу
+
+  try {
+    const response = await fetch(endpoint);
+    const data = await response.json();
+
+    data.reverse();
+
+    data.forEach(card => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "pet-carousel__card";
+
+      const button = document.createElement("button");
+      button.className = "openPopup info-btn";
+      button.setAttribute("aria-label", "Інформація");
+      button.textContent = "+";
+
+      const fields = [
+        "Ім'я",
+        "Фото",
+        "Порода",
+        "Вік",
+        "Розмір",
+        "Місто",
+        "Чекає господаря",
+        "Телефон"
+      ];
+
+      fields.forEach(field => {
+        const attrName = "data-" + field.toLowerCase().replace(/\s+/g, "-").replace(/'/g, "");
+        button.setAttribute(attrName, card[field] || "");
+      });
+
+      const img = document.createElement("img");
+      img.src = card["Фото"];
+      img.alt = card["Ім'я"] || "Тваринка";
+      img.loading = "lazy";
+
+      cardEl.appendChild(button);
+      cardEl.appendChild(img);
+      carousel.appendChild(cardEl);
+    });
+  } catch (error) {
+    console.error("Помилка при завантаженні карток:", error);
+  } finally {
+    carousel.classList.remove("loading"); // приховати смугу
+  }
+});
+
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ПОПАП ......................................................................................................................
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+const popupOverlay = document.getElementById("popupOverlay");
+const closePopupBtn = document.querySelector(".closePopup");
+let lastClickedButton = null;
+
+function initPopupButtons() {
+  const openPopupBtns = document.querySelectorAll(".openPopup");
+
+  if (openPopupBtns.length === 0) {
+    setTimeout(initPopupButtons, 100);
+    return;
+  }
+
+  openPopupBtns.forEach(button => {
+    button.addEventListener("click", function () {
+      lastClickedButton = button;
+
+      // Перевірка наявності всіх необхідних data-атрибутів
+      const requiredAttributes = ["імя", "порода", "вік", "розмір", "місто", "фото", "чекає-господаря", "телефон"];
+      const missingAttr = requiredAttributes.filter(attr => !button.dataset[attr]);
+
+      if (missingAttr.length > 0) {
+        console.warn("Відсутні data-атрибути:", missingAttr);
+        return;
+      }
+
+      // Вставлення текстових даних
+      document.getElementById("popupName").textContent = button.dataset.імя;
+      document.getElementById("popupBreed").textContent = button.dataset.порода;
+      document.getElementById("popupAge").textContent = button.dataset.вік;
+      document.getElementById("popupSize").textContent = button.dataset.розмір;
+      document.getElementById("popupCity").textContent = button.dataset.місто;
+      document.getElementById("popupPhone").textContent = button.dataset.телефон;
+      document.getElementById("popupPhone").href = `tel:${button.dataset.телефон.replace(/\s+/g, '')}`;
+      document.getElementById("popupWaits").textContent = button.getAttribute("data-чекає-господаря");
+
+      // Завантаження зображення
+      const popupImgContainer = document.querySelector(".popup__img");
+      const imgSrc = button.dataset.фото;
+      const img = new Image();
+      img.classList.add("popup-clone-img");
       img.alt = button.dataset.імя || "Фото тваринки";
       img.src = imgSrc;
 
       img.onload = () => {
         popupImgContainer.innerHTML = "";
         popupImgContainer.appendChild(img);
-        openPopup(button);
+        openPopup(button); // відкриваємо тільки після завантаження
       };
 
       img.onerror = () => {
@@ -41,25 +139,31 @@ add("popup-clone-img");
 
 function openPopup(button) {
   lastClickedButton = button;
-
+  
+  // Отримуємо координати кнопки одразу
   const buttonRect = button.getBoundingClientRect();
   const popupWidth = popupOverlay.offsetWidth;
   const popupHeight = popupOverlay.offsetHeight;
 
+  // Початкова позиція (центр кнопки)
   const startX = buttonRect.left + buttonRect.width / 2 - popupWidth / 2;
   const startY = buttonRect.top + buttonRect.height / 2 - popupHeight / 2;
-
+  
+  // Кінцева позиція (центр екрана)
   const endX = window.innerWidth / 2 - popupWidth / 2;
   const endY = window.innerHeight / 2 - popupHeight / 2;
 
+  // Встановлюємо початкову позицію без анімації
   popupOverlay.style.transition = 'none';
-  popupOverlay.style.transform = translate(${startX}px, ${startY}px) scale(0);
+  popupOverlay.style.transform = `translate(${startX}px, ${startY}px) scale(0)`;
   popupOverlay.classList.add("show");
-
+  
+  // Використовуємо requestAnimationFrame для гарантії, що браузер відобразив початковий стан
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
+      // Тепер включаємо анімацію
       popupOverlay.style.transition = "transform 0.3s ease-out";
-      popupOverlay.style.transform = translate(${endX}px, ${endY}px) scale(1);
+      popupOverlay.style.transform = `translate(${endX}px, ${endY}px) scale(1)`;
     });
   });
 
@@ -69,9 +173,9 @@ function openPopup(button) {
 function closePopup() {
   if (!lastClickedButton) return;
 
-  const buttonRect = lastClickedButton.getBoundingClientRect();
+    const buttonRect = lastClickedButton.getBoundingClientRect();
 
-  popupOverlay.style.transform = translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0);
+    popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
 
   setTimeout(() => {
     popupOverlay.classList.remove("show");
@@ -79,11 +183,17 @@ function closePopup() {
     lastClickedButton = null;
 
     const popupImgContainer = document.querySelector(".popup__img");
-    if (popupImgContainer) popupImgContainer.innerHTML = "";
+    if (popupImgContainer) {
+      popupImgContainer.innerHTML = "";
+    }
 
-    ["popupName","popupBreed","popupAge","popupSize","popupCity","popupPhone","popupWaits"].forEach(id => {
-      document.getElementById(id).textContent = "";
-    });
+    document.getElementById("popupName").textContent = "";
+    document.getElementById("popupBreed").textContent = "";
+    document.getElementById("popupAge").textContent = "";
+    document.getElementById("popupSize").textContent = "";
+    document.getElementById("popupCity").textContent = "";
+    document.getElementById("popupPhone").textContent = "";
+    document.getElementById("popupWaits").textContent = "";
   }, 300);
 }
 
@@ -736,4 +846,3 @@ form.addEventListener('submit', e => {
       }, 3000);
     });
 });
-
