@@ -22,146 +22,7 @@ const endpoint =
     });
 
 
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Отримуємо дані з таблиці з пагінацією та кешем ..................................................................
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const carousel = document.getElementById("carousel");
-const batchSize = 20; // скільки карток завантажувати за раз
-let currentIndex = 0;
-let allCards = [];
-
-document.addEventListener("DOMContentLoaded", async () => {
-  carousel.classList.add("loading");
-
-  try {
-    // Перевірка кешу
-    const cached = localStorage.getItem("cardsCache");
-    if (cached) {
-      allCards = JSON.parse(cached);
-      renderNextBatch();
-    }
-
-    // Завантаження даних з API
-    const response = await fetch(endpoint);
-    const data = await response.json();
-    allCards = data.reverse();
-
-    // Кешуємо
-    localStorage.setItem("cardsCache", JSON.stringify(allCards));
-
-    if (!cached) {
-      renderNextBatch();
-    }
-
-    // Підвантаження при скролі
-    window.addEventListener("scroll", () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-        renderNextBatch();
-      }
-    });
-
-  } catch (error) {
-    console.error("Помилка при завантаженні карток:", error);
-  } finally {
-    carousel.classList.remove("loading");
-  }
-});
-
-// Функція рендеру наступної партії карток
-function renderNextBatch() {
-  if (currentIndex >= allCards.length) return;
-
-  const fragment = document.createDocumentFragment();
-  const nextBatch = allCards.slice(currentIndex, currentIndex + batchSize);
-
-  nextBatch.forEach(card => {
-    const cardEl = document.createElement("div");
-    cardEl.className = "pet-carousel__card";
-
-    const button = document.createElement("button");
-    button.className = "openPopup info-btn";
-    button.setAttribute("aria-label", "Інформація");
-    button.textContent = "+";
-
-    const fields = [
-      "Ім'я",
-      "Фото",
-      "Порода",
-      "Вік",
-      "Розмір",
-      "Місто",
-      "Чекає господаря",
-      "Телефон"
-    ];
-
-    fields.forEach(field => {
-      const attrName = "data-" + field.toLowerCase().replace(/\s+/g, "-").replace(/'/g, "");
-      button.setAttribute(attrName, card[field] || "");
-    });
-
-    const img = document.createElement("img");
-    img.src = card["Фото"];
-    img.alt = card["Ім'я"] || "Тваринка";
-    img.loading = "lazy";
-
-    cardEl.appendChild(button);
-    cardEl.appendChild(img);
-    fragment.appendChild(cardEl);
-  });
-
-  carousel.appendChild(fragment);
-
-  currentIndex += batchSize;
-
-  // Ініціалізуємо кнопки попапів для нових карток
-  initPopupButtons();
-}
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ПОПАП ..................................................................................................................
-// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const popupOverlay = document.getElementById("popupOverlay");
-const closePopupBtn = document.querySelector(".closePopup");
-let lastClickedButton = null;
-
-function initPopupButtons() {
-  const openPopupBtns = document.querySelectorAll(".openPopup");
-
-  if (openPopupBtns.length === 0) {
-    setTimeout(initPopupButtons, 100);
-    return;
-  }
-
-  openPopupBtns.forEach(button => {
-    if (button.dataset.listenerAdded) return; // уникнення повторного додавання
-    button.dataset.listenerAdded = "true";
-
-    button.addEventListener("click", function () {
-      lastClickedButton = button;
-
-      const requiredAttributes = ["імя", "порода", "вік", "розмір", "місто", "фото", "чекає-господаря", "телефон"];
-      const missingAttr = requiredAttributes.filter(attr => !button.dataset[attr]);
-
-      if (missingAttr.length > 0) {
-        console.warn("Відсутні data-атрибути:", missingAttr);
-        return;
-      }
-
-      document.getElementById("popupName").textContent = button.dataset.імя;
-      document.getElementById("popupBreed").textContent = button.dataset.порода;
-      document.getElementById("popupAge").textContent = button.dataset.вік;
-      document.getElementById("popupSize").textContent = button.dataset.розмір;
-      document.getElementById("popupCity").textContent = button.dataset.місто;
-      document.getElementById("popupPhone").textContent = button.dataset.телефон;
-      document.getElementById("popupPhone").href = `tel:${button.dataset.телефон.replace(/\s+/g, '')}`;
-      document.getElementById("popupWaits").textContent = button.getAttribute("data-чекає-господаря");
-
-      const popupImgContainer = document.querySelector(".popup__img");
-      const imgSrc = button.dataset.фото;
-      const img = new Image();
-      img.classList.add("popup-clone-img");
+add("popup-clone-img");
       img.alt = button.dataset.імя || "Фото тваринки";
       img.src = imgSrc;
 
@@ -192,13 +53,13 @@ function openPopup(button) {
   const endY = window.innerHeight / 2 - popupHeight / 2;
 
   popupOverlay.style.transition = 'none';
-  popupOverlay.style.transform = `translate(${startX}px, ${startY}px) scale(0)`;
+  popupOverlay.style.transform = translate(${startX}px, ${startY}px) scale(0);
   popupOverlay.classList.add("show");
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       popupOverlay.style.transition = "transform 0.3s ease-out";
-      popupOverlay.style.transform = `translate(${endX}px, ${endY}px) scale(1)`;
+      popupOverlay.style.transform = translate(${endX}px, ${endY}px) scale(1);
     });
   });
 
@@ -210,7 +71,7 @@ function closePopup() {
 
   const buttonRect = lastClickedButton.getBoundingClientRect();
 
-  popupOverlay.style.transform = `translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0)`;
+  popupOverlay.style.transform = translate(${buttonRect.left + buttonRect.width / 2 - popupOverlay.offsetWidth / 2}px, ${buttonRect.top + buttonRect.height / 2 - popupOverlay.offsetHeight / 2}px) scale(0);
 
   setTimeout(() => {
     popupOverlay.classList.remove("show");
@@ -226,14 +87,22 @@ function closePopup() {
   }, 300);
 }
 
-popupOverlay.addEventListener("click", event => {
-  if (event.target === popupOverlay) closePopup();
+document.addEventListener("DOMContentLoaded", () => {
+  initPopupButtons();
+});
+
+popupOverlay.addEventListener("click", function (event) {
+  if (event.target === popupOverlay) {
+    closePopup();
+  }
 });
 
 closePopupBtn.addEventListener("click", closePopup);
 
 window.addEventListener('resize', () => {
-  if (popupOverlay.classList.contains('show')) closePopup();
+  if (popupOverlay.classList.contains('show')) {
+    closePopup();
+  }
 });
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -867,3 +736,4 @@ form.addEventListener('submit', e => {
       }, 3000);
     });
 });
+
